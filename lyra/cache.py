@@ -18,7 +18,7 @@ from .io import identity, readonly
 class ArrayCache:
     def __init__(self, root, gb=180, ram_gib=1.5, min_free_gib=8, legacy=None):
         if not math.isfinite(gb) or gb <= 0 or ram_gib < 0 or min_free_gib < 0:
-            raise ValueError('Érvénytelen cache-keret.')
+            raise ValueError('Invalid cache budget.')
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.capacity, self.reserve = int(gb * 10 ** 9), int(min_free_gib * 1024 ** 3)
@@ -67,11 +67,11 @@ class ArrayCache:
                 if row:
                     path = self.root / row[0]
                     if path.parent != self.root or not path.name.startswith('entry-'):
-                        raise ValueError('Érvénytelen cache-bejegyzés.')
+                        raise ValueError('Invalid cache entry.')
                     try:
                         raw = path.read_bytes()
                         if zlib.crc32(raw) != row[3]:
-                            raise ValueError('Sérült cache-bejegyzés.')
+                            raise ValueError('Corrupted cache entry.')
                         with np.load(io.BytesIO(raw), allow_pickle=False) as f:
                             value = {k: f[k] for k in f.files}
                         if row[2] < time.time() - 60:
@@ -150,7 +150,7 @@ class ArrayCache:
                         return
                     target = (self.root / oldest[1]).resolve()
                     if target.parent != self.root or not target.name.startswith('entry-'):
-                        raise ValueError('Érvénytelen cache-törlési cél.')
+                        raise ValueError('Invalid cache eviction target.')
                     target.unlink(missing_ok=True)
                     db.execute('DELETE FROM entries WHERE key=?', (oldest[0],))
                     used -= oldest[2]

@@ -8,7 +8,7 @@ set "OPENBLAS_NUM_THREADS=2"
 set "LYRA_PYTHON=%LOCALAPPDATA%\Lyra\venv\Scripts\python.exe"
 if not exist "%LYRA_PYTHON%" set "LYRA_PYTHON=..\osu-ai-mapper\.venv\Scripts\python.exe"
 if not exist "%LYRA_PYTHON%" (
-  echo Elobb futtasd az Install.ps1 fajlt.
+  echo Run Install.ps1 first.
   pause
   exit /b 1
 )

@@ -24,6 +24,8 @@ Lyra turns music into structured osu!standard hit objects and timing estimates. 
 
 The machine-readable [evidence snapshot](model-card/evidence-2026-10-20.json) records the configurations, dataset statistics, validation history, sample metadata, environment, and source-code SHA-256 hashes used for this card.
 
+Historical diagnostic messages in that snapshot are presented in English. Its measurements, identifiers, and source-code hashes still refer to the original audit; the later English-language update does not change the training snapshot.
+
 ## 1. Model identity and intended use
 
 | Field | Description |

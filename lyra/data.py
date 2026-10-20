@@ -26,10 +26,10 @@ def _prepare_batch(batch, model_config):
     for number, row in batch:
         try:
             if row.get('excluded'):
-                raise ValueError('A rögzített dataset kézzel kizárt mapja.')
+                raise ValueError('This map was manually excluded from the frozen dataset.')
             raw = read_bytes(row['map_path'], 8 * 1024 ** 2)
             if hashlib.sha256(raw).hexdigest() != row['map_hash']:
-                raise ValueError('A map megváltozott az eredeti előkészítés óta.')
+                raise ValueError('The map has changed since the original preparation.')
             bm = parse_map(row['map_path'])
             spans = windows(bm, row['duration_ms'], config)
             keep = {k: row[k] for k in ('id', 'map_path', 'map_hash', 'audio_path', 'audio_hash',
@@ -63,7 +63,7 @@ def _process_records(rows, config, workers, cancelled):
             if cancelled():
                 for future in pending:
                     future.cancel()
-                raise InterruptedError('Előkészítés elmentve; folytatható.')
+                raise InterruptedError('Preparation progress saved; it can be resumed.')
             yield from pending.popleft().result()
             submit()
 
@@ -94,7 +94,7 @@ def _prepare(source, destination, config, progress, cancelled, workers):
         source = source / 'manifest.json'
     manifest = load_json(source)
     if not manifest or 'index' not in manifest:
-        raise ValueError('A már előkészített teljes dataset manifest.json fájlja szükséges.')
+        raise ValueError('The manifest.json file for the prepared full dataset is required.')
     root = Path(destination).resolve()
     root.mkdir(parents=True, exist_ok=True)
     geometry = {k: asdict(config)[k] for k in ('audio_ms', 'history_ms', 'output_ms', 'history_tokens', 'max_tokens')}
@@ -103,7 +103,7 @@ def _prepare(source, destination, config, progress, cancelled, workers):
     published = load_json(root / 'manifest.json')
     if published:
         if published['hash'] != fingerprint:
-            raise ValueError('Ez a Lyra-adatkönyvtár más datasethez vagy kontextushoz tartozik.')
+            raise ValueError('This Lyra data directory belongs to a different dataset or context configuration.')
         return published
     path = root / ('index.sqlite' if (root / 'index.sqlite').exists() else 'index.build.sqlite')
     db = sqlite3.connect(path)
@@ -111,7 +111,7 @@ def _prepare(source, destination, config, progress, cancelled, workers):
         db.execute('CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY,value TEXT)')
         saved = db.execute("SELECT value FROM metadata WHERE key='hash'").fetchone()
         if saved and saved[0] != fingerprint:
-            raise ValueError('Az előkészítés forrása megváltozott. Válassz új célkönyvtárat.')
+            raise ValueError('The preparation source has changed. Choose a new destination directory.')
         db.execute("INSERT OR IGNORE INTO metadata VALUES('hash',?)", (fingerprint,))
         db.execute('CREATE TABLE IF NOT EXISTS maps(id TEXT PRIMARY KEY,split TEXT,group_id TEXT,payload TEXT)')
         db.execute('CREATE TABLE IF NOT EXISTS windows(id INTEGER PRIMARY KEY,map_id TEXT,start INTEGER,end INTEGER,tokens INTEGER,split TEXT)')
@@ -130,7 +130,7 @@ def _prepare(source, destination, config, progress, cancelled, workers):
                         row.update(labels[row['id']])
                     for seen, key in ((audio_splits, row['audio_hash']), (group_splits, row['group'])):
                         if seen.setdefault(key, row['split']) != row['split']:
-                            raise ValueError('Train/validáció/test dalátfedés a forrásadatokban.')
+                            raise ValueError('Song overlap across train/validation/test splits in the source data.')
                     if row['id'] not in existing:
                         yield number, row
             completed = 0
@@ -145,14 +145,14 @@ def _prepare(source, destination, config, progress, cancelled, workers):
                 if completed % 100 == 0:
                     db.commit()
                     atomic_json(root / 'progress.json', dict(status='preparing', maps=number, total=total))
-                    progress(f'Dataset: {number:,} / {total:,} map; minden szakasz indexelése.')
+                    progress(f'Dataset: {number:,} / {total:,} maps; indexing every section.')
             db.executemany('INSERT OR REPLACE INTO audio_labels VALUES(?,?)', src.execute('SELECT audio_hash,payload FROM audio_labels'))
         db.commit()
         counts = dict(db.execute('SELECT split,COUNT(*) FROM maps GROUP BY split'))
         win_counts = dict(db.execute('SELECT split,COUNT(*) FROM windows GROUP BY split'))
         rejected = db.execute('SELECT COUNT(*) FROM rejected').fetchone()[0]
         if not all(counts.get(s, 0) for s in ('train', 'validation', 'test')):
-            raise ValueError('Mindhárom dalonként elkülönített részhalmaz szükséges.')
+            raise ValueError('All three song-disjoint splits are required.')
         # Compact, shared read-only mmap arrays keep spawned workers small.
         for split in counts:
             rows = db.execute('SELECT id,tokens FROM windows WHERE split=? ORDER BY id', (split,)).fetchall()
@@ -170,14 +170,14 @@ def _prepare(source, destination, config, progress, cancelled, workers):
                   arrays_sha256={s: digest(root / (s + '.npy')) for s in counts})
     atomic_json(root / 'manifest.json', report)
     atomic_json(root / 'progress.json', dict(status='complete', **counts))
-    progress(f'Lyra dataset kész: {sum(counts.values()):,} map, {sum(win_counts.values()):,} ablak; kizárt: {rejected}.')
+    progress(f'Lyra dataset ready: {sum(counts.values()):,} maps, {sum(win_counts.values()):,} windows; rejected: {rejected}.')
     return report
 
 
 def decode_frozen(row, cache_root):
     raw = read_bytes(row['audio_path'])
     if row.get('bytes_sha256') and hashlib.sha256(raw).hexdigest() != row['bytes_sha256']:
-        raise ValueError('A rögzített audio megváltozott.')
+        raise ValueError('The frozen audio has changed.')
     path, member = source_parts(row['audio_path'])
     if member is None:
         pcm = audio.decode(path)
@@ -194,7 +194,7 @@ def decode_frozen(row, cache_root):
                 capture_output=True, timeout=600, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         pcm = np.frombuffer(proc.stdout, '<f4').copy()
         if proc.returncode or audio.pcm_hash(pcm) != row['audio_hash']:
-            raise ValueError('A dekódolt audio nem egyezik a rögzített datasetével.')
+            raise ValueError('The decoded audio does not match the frozen dataset.')
     return pcm
 
 
@@ -204,10 +204,10 @@ class Dataset:
         self.config = config or ModelConfig()
         self.split, self.seed = split, seed
         if not self.manifest or not self.manifest.get('complete'):
-            raise ValueError('Előbb a teljes Lyra datasetet kell előkészíteni.')
+            raise ValueError('Prepare the full Lyra dataset first.')
         expected = {k: asdict(self.config)[k] for k in self.manifest['model_context']}
         if expected != self.manifest['model_context']:
-            raise ValueError('A dataset és a modell kontextusbeállításai eltérnek.')
+            raise ValueError('The dataset and model context configurations differ.')
         self.cache_options = cache_options or dict(root=str(CACHE), legacy='F:/osu_cache/runtime-arrays-v1')
         self._cache = None
         self.entries = np.load(Path(self.manifest['root']) / (split + '.npy'), mmap_mode='r')
@@ -237,25 +237,25 @@ class Dataset:
         with readonly(self.manifest['index']) as db:
             record = db.execute('SELECT payload FROM maps WHERE id=?', (mid,)).fetchone()
         if record is None:
-            raise ValueError(f'A kiválasztott map nincs a rögzített Lyra datasetben: {mid}')
+            raise ValueError(f'The selected map is not in the frozen Lyra dataset: {mid}')
         return json.loads(record[0])
 
     def beatmap(self, row):
         if signature(row['map_path']) != row['map_signature']:
-            raise ValueError('A forrásmap megváltozott; a rögzített dataset nem írható át.')
+            raise ValueError('The source map has changed; the frozen dataset cannot be modified.')
         key = row['map_hash']
         value = self.cache.get('lyra-maps', key)
         if value is None:
             raw = read_bytes(row['map_path'], 8 * 1024 ** 2)
             if hashlib.sha256(raw).hexdigest() != key:
-                raise ValueError('Map checksum eltérés.')
+                raise ValueError('Map checksum mismatch.')
             value = dict(json=np.frombuffer(json.dumps(map_dict(parse_map(row['map_path']))).encode(), np.uint8).copy())
             self.cache.put('lyra-maps', key, value)
         return map_from_dict(json.loads(value['json'].tobytes()))
 
     def mel_window(self, row, base, count):
         if signature(row['audio_path']) != row['audio_signature']:
-            raise ValueError('A forrásaudio megváltozott.')
+            raise ValueError('The source audio has changed.')
         frames = int(math.floor(row['duration_ms'] / audio.FRAME_MS + 1e-7)) + 1
         start = round(base / audio.FRAME_MS)
         end = min(start + count, frames)
@@ -271,7 +271,7 @@ class Dataset:
                     pcm = decode_frozen(row, self.cache.root)
                     self.cache.stats['audio_decodes'] += 1
                     if len(pcm) // audio.HOP + 1 != frames:
-                        raise ValueError('A rögzített audiohossz eltér.')
+                        raise ValueError('The audio duration differs from the frozen value.')
                     for i in tiles:
                         if values[i] is None:
                             values[i] = dict(mel=audio.spectrogram_block(pcm, i * 4096).astype(np.float16))
@@ -320,7 +320,7 @@ class Dataset:
         targets = [t for _, rec in self.tok.records(bm, ctx['base'], start, end) for t in rec]
         sequence = ctx['prefix'] + targets + [self.tok.ids['EOS']]
         if len(sequence) > self.config.max_tokens:
-            raise ValueError('Az előkészített ablak meghaladja a tokenkeretet.')
+            raise ValueError('The prepared window exceeds the token budget.')
         labels = np.asarray(sequence[1:], np.int64)
         labels[:len(ctx['prefix']) - 1] = -100
         count = math.ceil(self.config.audio_ms / audio.FRAME_MS / 4) * 4

@@ -15,9 +15,9 @@ FORMAT = 'lyra-audio-example-v1'
 def load_example(path):
     spec = load_json(path)
     if not spec or spec.get('format') != FORMAT:
-        raise ValueError('Érvénytelen külső hangpélda.')
+        raise ValueError('Invalid external audio example.')
     if digest(spec['audio_path']) != spec['audio_sha256']:
-        raise ValueError('A rögzített példazene megváltozott.')
+        raise ValueError('The frozen example audio has changed.')
     return spec
 
 
@@ -25,7 +25,7 @@ def prepare_example(source, destination, start_ms, end_ms, *, generation=None, s
     from .generation import GenerationConfig
     from dataclasses import asdict
     if not all(math.isfinite(v) for v in (start_ms, end_ms)) or not 0 <= start_ms < end_ms:
-        raise ValueError('A hangrészlet kezdete legyen korábbi a végénél.')
+        raise ValueError('The audio excerpt must start before it ends.')
     source, destination = Path(source).resolve(), Path(destination).resolve()
     cfg = generation or GenerationConfig(stars=6.5, seed=2026, temperature=.6, candidates=1)
     cfg.validate()
@@ -33,7 +33,7 @@ def prepare_example(source, destination, start_ms, end_ms, *, generation=None, s
     pcm = audio.decode(source)
     source_duration = len(pcm) * 1000 / audio.SR
     if end_ms > source_duration:
-        raise ValueError('A kért részlet túlnyúlik a zenén.')
+        raise ValueError('The requested excerpt extends beyond the audio.')
     source_pcm_hash = audio.pcm_hash(pcm)
     del pcm
     destination.mkdir(parents=True, exist_ok=True)
@@ -42,7 +42,7 @@ def prepare_example(source, destination, start_ms, end_ms, *, generation=None, s
         spec = load_example(manifest)
         if (spec['source_sha256'], spec['source_range_ms'], spec['generation'], spec['difficulty_settings']) != (
                 source_hash, [start_ms, end_ms], asdict(cfg), settings or dict(AR=9.4, OD=9., CS=4., HP=5.)):
-            raise ValueError('Ez a példamappa már más beállítású hangrészletet tartalmaz.')
+            raise ValueError('This example directory already contains an excerpt with different settings.')
         return str(manifest)
     target = destination / 'audio.ogg'
     temp = destination / f'audio-{uuid.uuid4().hex}.ogg'
@@ -56,7 +56,7 @@ def prepare_example(source, destination, start_ms, end_ms, *, generation=None, s
             raise ValueError(result.stderr.decode(errors='replace'))
         duration = len(audio.decode(temp)) * 1000 / audio.SR
         if abs(duration - (end_ms - start_ms)) > 100:
-            raise ValueError('A kivágott hang hossza nem egyezik a kért részlettel.')
+            raise ValueError('The extracted audio duration does not match the requested excerpt.')
         temp.replace(target)
     finally:
         temp.unlink(missing_ok=True)
@@ -80,7 +80,7 @@ def generate_example(model, manifest, destination, device, cancelled=lambda: Fal
     cfg = GenerationConfig(**spec['generation'])
     cfg.validate()
     if cancelled():
-        raise InterruptedError('Generálás leállítva.')
+        raise InterruptedError('Generation stopped.')
     cache = ArrayCache(root=str(CACHE), gb=180, ram_gib=.05, min_free_gib=8, legacy=None)
     key = identity([spec['audio_sha256'], audio.VERSION])
     value = cache.get('external-example-mel', key)
@@ -92,7 +92,7 @@ def generate_example(model, manifest, destination, device, cancelled=lambda: Fal
     was_training = model.training
     model.eval()
     try:
-        progress('Timing felismerése a külső zenéből.')
+        progress('Estimating timing from the external audio.')
         timing, timing_report = infer_timing(model, mel, spec['duration_ms'], device, cfg, cancelled)
         bm = candidate(model, mel, spec['duration_ms'], timing, cfg, spec['difficulty_settings'],
                        device, cfg.seed, progress, cancelled)

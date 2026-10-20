@@ -30,7 +30,7 @@ def status(path):
         elif spec.get('status') == 'starting' and time.time() - spec.get('started', 0) < 30:
             state = {**state, 'status': 'starting'}
         else:
-            state = {**state, 'status': 'interrupted', 'message': 'A worker leállt; az utolsó mentésből folytatható.'}
+            state = {**state, 'status': 'interrupted', 'message': 'The worker stopped; resume from the last checkpoint.'}
     state.update(job_id=path.stem, action=spec.get('action'), arguments=spec.get('arguments', {}))
     log = path.with_suffix('.log')
     if log.exists():
@@ -55,7 +55,7 @@ def start(home, action, arguments):
     with FileLock(str(root / 'launch.lock'), timeout=5):
         current = latest(home)
         if current and status(current)['status'] in ('starting', 'running'):
-            raise ValueError('Már fut egy Lyra-feladat. Várd meg vagy állítsd le a mentésével.')
+            raise ValueError('A Lyra job is already running. Wait for it to finish, or stop and save it.')
         path = root / (time.strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:6] + '.json')
         spec = dict(action=action, arguments=arguments, status='starting', started=time.time())
         atomic_json(path, spec)
@@ -75,9 +75,9 @@ def start(home, action, arguments):
 def cancel(home):
     path = latest(home)
     if not path or status(path)['status'] not in ('running', 'starting'):
-        return 'Nincs futó feladat.'
+        return 'No job is running.'
     path.with_suffix('.cancel').touch()
-    return 'Leállítás kérve. A tanítás a lezárt update-eket menti.'
+    return 'Stop requested. Training will save completed updates.'
 
 
 def dispatch(action, args, progress=print, cancelled=lambda: False):
@@ -100,7 +100,7 @@ def dispatch(action, args, progress=print, cancelled=lambda: False):
     if action == 'evaluate':
         from .evaluation import evaluate
         return evaluate(**args, progress=progress, cancelled=cancelled)
-    raise ValueError('Ismeretlen Lyra-feladat.')
+    raise ValueError('Unknown Lyra job.')
 
 
 def worker(path):
@@ -111,7 +111,7 @@ def worker(path):
         print(message, flush=True)
         atomic_json(path.with_suffix('.status.json'), dict(status='running', message=str(message), **lease))
     try:
-        progress('Lyra háttérfolyamat elindult.')
+        progress('Lyra background worker started.')
         result = dispatch(spec['action'], spec['arguments'], progress, lambda: path.with_suffix('.cancel').exists())
         atomic_json(path.with_suffix('.status.json'), dict(status='cancelled' if path.with_suffix('.cancel').exists() else 'complete', result=result, **lease))
     except (InterruptedError, KeyboardInterrupt) as exc:

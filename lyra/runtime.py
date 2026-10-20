@@ -15,7 +15,7 @@ from .tokenizer import VERSION
 def device_for(name='auto'):
     name = ('cuda' if torch.cuda.is_available() else 'cpu') if name == 'auto' else name
     if name.startswith('cuda') and not torch.cuda.is_available():
-        raise ValueError('CUDA nem érhető el ebben a Python-környezetben.')
+        raise ValueError('CUDA is unavailable in this Python environment.')
     return torch.device(name)
 
 
@@ -37,12 +37,12 @@ def gpu_session(device, fraction=.8):
         except (OSError, ValueError):
             pid = -1
         if psutil.pid_exists(pid):
-            raise ValueError('Még fut a korábbi mapper a GPU-n. Előbb állítsd le a mentésével.')
+            raise ValueError('The previous mapper is still running on the GPU. Stop and save it first.')
     lock = FileLock(str(Path(tempfile.gettempdir()) / 'lyra-gpu.lock'), timeout=0)
     with lock:
         free, total = torch.cuda.mem_get_info(device)
         if free < total * .65:
-            raise ValueError('A GPU memóriáját más program használja. A próba/tanítás később indítható.')
+            raise ValueError('Another program is using GPU memory. Start the benchmark or training later.')
         torch.cuda.set_per_process_memory_fraction(fraction, device.index or 0)
         yield
 
@@ -109,7 +109,7 @@ def save_checkpoint(path, state):
 def load_checkpoint(path):
     state = torch.load(path, map_location='cpu', weights_only=False)
     if state.get('format') != 'lyra-1' or state.get('tokenizer') != VERSION:
-        raise ValueError('Ez nem Lyra-mentés. A V1/V2 súlyai nem tölthetők be más architektúrába.')
+        raise ValueError('This is not a Lyra checkpoint. V1/V2 weights cannot be loaded into a different architecture.')
     return state
 
 

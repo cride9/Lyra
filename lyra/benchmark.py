@@ -18,9 +18,9 @@ def benchmark(output=None, device='auto', tiny=False, updates=3, batch_size=1, p
     device = device_for(device)
     config = ModelConfig.tiny() if tiny else ModelConfig()
     if device.type == 'cpu' and not tiny:
-        raise ValueError('A teljes 120M-es memóriapróbához CUDA kell; CPU-n a tiny diagnosztika használható.')
+        raise ValueError('The full 120M-parameter memory benchmark requires CUDA; use the tiny diagnostic on CPU.')
     if updates < 1 or batch_size not in (1, 2, 4, 8):
-        raise ValueError('Legalább egy mért update szükséges.')
+        raise ValueError('At least one measured update is required.')
     torch.set_num_threads(2)
     path = Path(output or HOME / 'checks' / 'gpu.json')
     report = dict(model='Lyra', config=asdict(config), device=str(device), passed=False)
@@ -48,7 +48,7 @@ def benchmark(output=None, device='auto', tiny=False, updates=3, batch_size=1, p
             durations, attempts, successes = [], 0, 0
             while successes < updates + 1:
                 if cancelled():
-                    raise InterruptedError('Memóriapróba leállítva.')
+                    raise InterruptedError('Memory benchmark stopped.')
                 tick = time.monotonic()
                 optimizer.zero_grad(set_to_none=True)
                 with amp(device):
@@ -65,9 +65,9 @@ def benchmark(output=None, device='auto', tiny=False, updates=3, batch_size=1, p
                     successes += 1
                     if successes > 1:
                         durations.append(time.monotonic() - tick)
-                    progress(f'Memóriapróba: {successes}/{updates + 1} teljes optimizer-update.')
+                    progress(f'Memory benchmark: {successes}/{updates + 1} complete optimizer updates.')
                 if attempts > updates + 16:
-                    raise ValueError('A memóriapróba FP16-frissítése nem stabil.')
+                    raise ValueError('The memory benchmark FP16 update is unstable.')
             report.update(passed=True, measured_updates=len(durations), maximum_tokens=length,
                           audio_frames=frames, seconds_per_microbatch=float(np.mean(durations)),
                           target_tokens_per_second=count / float(np.mean(durations)), loss=float(loss.detach()),
@@ -75,9 +75,9 @@ def benchmark(output=None, device='auto', tiny=False, updates=3, batch_size=1, p
                           gpu=torch.cuda.get_device_name(device) if device.type == 'cuda' else None, **memory(device))
             report['headroom_ok'] = device.type != 'cuda' or report['free_vram_gib'] >= .75
             if not report['headroom_ok']:
-                report['warning'] = 'A próba lefutott, de 0,75 GiB alá csökkent a szabad VRAM. Válassz kisebb batch-et.'
+                report['warning'] = 'The benchmark passed, but free VRAM fell below 0.75 GiB. Choose a smaller batch size.'
         except torch.cuda.OutOfMemoryError:
-            report.update(error='A maximális kontextus nem fér el a rendelkezésre álló dedikált VRAM-ban.', **memory(device))
+            report.update(error='The maximum context does not fit in the available dedicated VRAM.', **memory(device))
         finally:
             atomic_json(path, report)
     if not report['passed']:

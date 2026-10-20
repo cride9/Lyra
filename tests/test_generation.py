@@ -118,7 +118,7 @@ def test_periodic_example_uses_fixed_reference_for_full_song(prepared, tmp_path,
     np.testing.assert_array_equal(calls[0][0], calls[1][0])
     assert calls[0][1:] == calls[1][1:] == (4000., 2026, .6, dict(AR=8, OD=7, CS=4, HP=5), None)
     assert dataset.split == 'validation' and len(dataset) == 1
-    with pytest.raises(ValueError, match='datasetben'):
+    with pytest.raises(ValueError, match='frozen Lyra dataset'):
         generation.training_sample(model, dataset, tmp_path, torch.device('cpu'), reference_map_id='missing')
 
     def rejected(*args, **kwargs):

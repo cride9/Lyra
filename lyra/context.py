@@ -44,7 +44,7 @@ def windows(bm, duration, config):
     times = sorted(sizes)
     budget = config.max_tokens - config.history_tokens - 15
     if any(n > budget for n in sizes.values()):
-        raise ValueError('Egyidejű objektumok nem férnek a Lyra tokenkeretébe.')
+        raise ValueError('Simultaneous objects exceed the Lyra token budget.')
     start, cursor = 0, 0
     result = []
     while start < duration:
@@ -58,7 +58,7 @@ def windows(bm, duration, config):
                 used += sizes[times[at]]
             at += 1
         if end <= start:
-            raise ValueError('A mapablak nem halad előre.')
+            raise ValueError('The map window is not advancing.')
         result.append((start, end, used + config.history_tokens + 14))
         start, cursor = end, at
     return result

@@ -80,7 +80,7 @@ def test_cache_warm_path_identical_and_source_changes_rejected(prepared, tmp_pat
     row = ds.row(a['meta']['map'])
     with open(row['map_path'], 'a', encoding='utf-8') as f:
         f.write('\n// changed\n')
-    with pytest.raises(ValueError, match='megváltozott'):
+    with pytest.raises(ValueError, match='has changed'):
         ds[0]
 
 
@@ -111,5 +111,5 @@ def test_prepare_rejects_song_leakage(corpus, tmp_path):
         payload = json.loads(db.execute("SELECT payload FROM records WHERE id='map-3'").fetchone()[0])
         payload['group'] = 'song-0'
         db.execute("UPDATE records SET payload=? WHERE id='map-3'", (json.dumps(payload),))
-    with pytest.raises(ValueError, match='dalátfedés'):
+    with pytest.raises(ValueError, match='Song overlap'):
         prepare(corpus, tmp_path / 'bad', ModelConfig.tiny(), workers=0)

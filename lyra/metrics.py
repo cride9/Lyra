@@ -60,7 +60,7 @@ class Metrics:
                 yield json.dumps(value, ensure_ascii=False, allow_nan=False) + '\n'
             return
         if format != 'csv':
-            raise ValueError('CSV vagy JSONL export választható.')
+            raise ValueError('Choose CSV or JSONL export.')
         columns = ['record_type', 'restored_step', 'timestamp_utc', 'step', 'target_steps',
                    'elapsed_seconds', 'loss', 'loss_ema', 'token_loss', 'beat_loss',
                    'validation_token_loss', 'validation.beat_loss', 'validation.windows',

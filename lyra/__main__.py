@@ -4,7 +4,7 @@ from .config import HOME, SOURCE
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='lyra', description='Lyra: egyetlen audio–mapper modell.')
+    parser = argparse.ArgumentParser(prog='lyra', description='Lyra: one jointly trained audio-to-beatmap model.')
     commands = parser.add_subparsers(dest='command', required=True)
     ui = commands.add_parser('ui')
     ui.add_argument('--home', default=str(HOME)); ui.add_argument('--port', type=int, default=7862)

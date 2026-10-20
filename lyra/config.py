@@ -25,9 +25,9 @@ class ModelConfig:
 
     def __post_init__(self):
         if self.width % self.heads or self.max_tokens <= self.history_tokens + 512:
-            raise ValueError('Érvénytelen modellméret vagy kontextuskeret.')
+            raise ValueError('Invalid model dimensions or context budget.')
         if self.history_ms + self.output_ms > self.audio_ms or self.audio_ms > 64000:
-            raise ValueError('A hangablaknak a teljes előzményt és kimenetet tartalmaznia kell.')
+            raise ValueError('The audio window must contain the entire history and output interval.')
 
     @classmethod
     def tiny(cls):
@@ -62,10 +62,10 @@ class TrainConfig:
 
     def __post_init__(self):
         if self.batch_size < 1 or self.effective_batch % self.batch_size:
-            raise ValueError('Az effektív batch legyen a fizikai batch többszöröse.')
+            raise ValueError('The effective batch size must be a multiple of the physical batch size.')
         if self.cycles < 1 or self.workers < 0 or not 0 < self.memory_fraction <= .9:
-            raise ValueError('Érvénytelen adatkör-, worker- vagy memóriabeállítás.')
+            raise ValueError('Invalid cycle, worker, or memory settings.')
         if self.lr <= 0 or self.warmup < 1 or self.validate_every < 1 or self.validation_windows < 1:
-            raise ValueError('Érvénytelen tanítási beállítás.')
+            raise ValueError('Invalid training settings.')
         if self.sample_every < 0:
-            raise ValueError('A példagenerálás gyakorisága nem lehet negatív.')
+            raise ValueError('The sample generation interval cannot be negative.')

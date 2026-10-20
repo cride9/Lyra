@@ -26,7 +26,7 @@ def create_app(home=HOME):
         origin = request.headers.get('origin')
         if request.method != 'GET' and origin and urlparse(origin).netloc != request.headers.get('host'):
             from fastapi.responses import JSONResponse
-            return JSONResponse(dict(detail='Érvénytelen kérésforrás.'), status_code=403)
+            return JSONResponse(dict(detail='Invalid request origin.'), status_code=403)
         response = await call_next(request)
         response.headers['Cache-Control'] = 'no-store'
         return response
@@ -38,7 +38,7 @@ def create_app(home=HOME):
 
     def run_path(name):
         if not name or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in name):
-            raise ValueError('A tanítás neve csak betűt, számot, kötőjelet és aláhúzást tartalmazhat.')
+            raise ValueError('Run names may contain only ASCII letters, digits, hyphens, and underscores.')
         return home / 'runs' / name
 
     def launch(action, args, values=None):
@@ -46,7 +46,7 @@ def create_app(home=HOME):
             result = jobs.start(home, action, args)
             if values:
                 atomic_json(home / 'settings.json', {**settings(), **values})
-            return dict(job=result, message='A háttérfeladat elindult.')
+            return dict(job=result, message='Background job started.')
         except (ValueError, OSError) as exc:
             raise HTTPException(400, str(exc)) from exc
 
@@ -89,9 +89,9 @@ def create_app(home=HOME):
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         if format not in ('csv', 'jsonl'):
-            raise HTTPException(400, 'CSV vagy JSONL export választható.')
+            raise HTTPException(400, 'Choose CSV or JSONL export.')
         if not (path / 'metrics.sqlite').is_file():
-            raise HTTPException(404, 'Ehhez a tanításhoz még nincs metrika.')
+            raise HTTPException(404, 'No metrics are available for this training run yet.')
         return StreamingResponse(Metrics(path).export(format, include_archived),
                 media_type='text/csv; charset=utf-8' if format == 'csv' else 'application/x-ndjson',
                 headers={'Content-Disposition': f'attachment; filename="lyra-{run}-metrics.{format}"'})
@@ -107,7 +107,7 @@ def create_app(home=HOME):
         except (TypeError, ValueError) as exc:
             raise HTTPException(400, str(exc)) from exc
         if not (home / 'dataset' / 'manifest.json').is_file():
-            raise HTTPException(400, 'Előbb készítsd elő a datasetet az Adatok lapon.')
+            raise HTTPException(400, 'Prepare the dataset on the Data tab first.')
         resume = str(run / 'last.pt') if (run / 'last.pt').is_file() else None
         return launch('train', dict(dataset_path=str(home / 'dataset' / 'manifest.json'), run_dir=str(run),
                                    config=asdict(cfg), resume=resume),
@@ -122,7 +122,7 @@ def create_app(home=HOME):
         body = await request.json()
         batch = int(body.get('batch_size', 4))
         if batch not in (1, 2, 4, 8):
-            raise HTTPException(400, 'A batch mérete 1, 2, 4 vagy 8 lehet.')
+            raise HTTPException(400, 'Batch size must be 1, 2, 4, or 8.')
         return launch('benchmark', dict(output=str(home / 'checks' / 'gpu.json'), batch_size=batch))
 
     @app.post('/api/evaluate')
@@ -154,7 +154,7 @@ def create_app(home=HOME):
     async def upload(file: UploadFile = File(...)):
         suffix = Path(file.filename or '').suffix.lower()
         if suffix not in ('.mp3', '.ogg', '.wav', '.flac'):
-            raise HTTPException(400, 'MP3, OGG, WAV vagy FLAC fájl választható.')
+            raise HTTPException(400, 'Choose an MP3, OGG, WAV, or FLAC file.')
         folder = home / 'inputs'
         folder.mkdir(exist_ok=True)
         path = folder / (Path(file.filename).stem[:80] + '-' + uuid.uuid4().hex[:6] + suffix)
@@ -164,7 +164,7 @@ def create_app(home=HOME):
                 while chunk := await file.read(1024 ** 2):
                     size += len(chunk)
                     if size > 512 * 1024 ** 2:
-                        raise HTTPException(400, 'A zenefájl legfeljebb 512 MiB lehet.')
+                        raise HTTPException(400, 'The audio file must not exceed 512 MiB.')
                     out.write(chunk)
             return dict(path=str(path))
         except Exception:
@@ -177,10 +177,10 @@ def create_app(home=HOME):
     def download(path: str):
         target = Path(path).resolve()
         if not target.is_file() or target.suffix.lower() != '.osz':
-            raise HTTPException(404, 'A map nem található.')
+            raise HTTPException(404, 'Map not found.')
         output = Path(settings()['output']).resolve()
         if not target.is_relative_to(output):
-            raise HTTPException(403, 'A fájl nem a generált mapok mappájában van.')
+            raise HTTPException(403, 'The file is outside the generated maps directory.')
         return FileResponse(target, filename=target.name)
 
     app.mount('/static', StaticFiles(directory=web), name='static')

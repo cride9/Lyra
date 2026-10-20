@@ -125,7 +125,7 @@ class Lyra(nn.Module):
 
     def hidden(self, tokens, memory, memory_valid):
         if tokens.shape[1] > self.config.max_tokens:
-            raise ValueError('Lyra kontextuskeret túllépve.')
+            raise ValueError('Lyra context budget exceeded.')
         x = self.embedding(tokens)
         x = x + positions(x.shape[1], x.shape[2], x.device).to(x.dtype)
         for layer in self.decoder:
@@ -144,7 +144,7 @@ class Lyra(nn.Module):
     @torch.no_grad()
     def step(self, tokens, memory, memory_valid, caches=None, offset=0):
         if offset + tokens.shape[1] > self.config.max_tokens:
-            raise ValueError('Lyra kontextuskeret túllépve.')
+            raise ValueError('Lyra context budget exceeded.')
         x = self.embedding(tokens)
         x = x + positions(x.shape[1], x.shape[2], x.device, offset).to(x.dtype)
         result = []

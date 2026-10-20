@@ -62,7 +62,7 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
     run.mkdir(parents=True, exist_ok=True)
     saved = load_checkpoint(resume) if resume else None
     if not saved and (run / 'last.pt').exists():
-        raise ValueError('Ebben a mappában már van tanítás. Válaszd a Folytatás gombot.')
+        raise ValueError('This directory already contains a training run. Choose Resume training.')
     if saved:
         original = TrainConfig(**saved['train_config'])
         for key in ('workers', 'ram_cache_gib', 'disk_cache_gb', 'min_free_gib', 'batch_size',
@@ -75,11 +75,11 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
     device = device_for(cfg.device)
     manifest = load_json(dataset_path)
     if not manifest:
-        raise ValueError('Előbb készítsd elő a teljes Lyra datasetet.')
+        raise ValueError('Prepare the full Lyra dataset first.')
     if saved and saved['dataset_hash'] != manifest['hash']:
-        raise ValueError('A folytatáshoz az eredeti dataset szükséges.')
+        raise ValueError('Resuming requires the original dataset.')
     if manifest.get('index_sha256') and digest(manifest['index']) != manifest['index_sha256']:
-        raise ValueError('A rögzített Lyra-index megváltozott.')
+        raise ValueError('The frozen Lyra index has changed.')
     config = ModelConfig(**saved['model_config']) if saved else ModelConfig.tiny() if cfg.model == 'tiny' else ModelConfig()
     validation_ram = min(.5, cfg.ram_cache_gib * .25)
     options = dict(root=str(CACHE), gb=cfg.disk_cache_gb, ram_gib=(cfg.ram_cache_gib - validation_ram) / max(1, cfg.workers),
@@ -93,7 +93,7 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
         validation.row(cfg.sample_map_id)
     target = cfg.steps or math.ceil(len(dataset) * cfg.cycles / cfg.effective_batch)
     if target < 1:
-        raise ValueError('Üres tanítási cél.')
+        raise ValueError('The training target is empty.')
     random.seed(cfg.seed); np.random.seed(cfg.seed); torch.manual_seed(cfg.seed)
     step = saved['step'] if saved else 0
     before = saved['elapsed_seconds'] if saved else 0.
@@ -125,7 +125,7 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
             scaler.load_state_dict(saved['scaler']); restore_random(saved['random'])
         del saved
         params = sum(p.numel() for p in model.parameters())
-        progress(f'Lyra: {params:,} együtt tanított paraméter; {len(dataset):,} train ablak; cél {target:,} update.')
+        progress(f'Lyra: {params:,} jointly trained parameters; {len(dataset):,} training windows; target {target:,} updates.')
         sampler = UpdateSampler(dataset, cfg.effective_batch, cfg.batch_size, step, cfg.seed, target)
         loader = DataLoader(dataset, batch_sampler=sampler, collate_fn=collate, num_workers=cfg.workers,
                             pin_memory=device.type == 'cuda', worker_init_fn=worker_init,
@@ -153,12 +153,12 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
             destination = run / 'samples' / f'step-{step}'
             random_before = random_state()
             try:
-                kind = 'külső hangrészlet példagenerálása' if cfg.sample_audio_example else 'teljes dalos példagenerálás'
+                kind = 'generating an external-audio excerpt sample' if cfg.sample_audio_example else 'generating a full-song sample'
                 progress(f'Lyra {step:,}: {kind}.')
                 output = training_sample(model, validation, destination, device, cancelled,
                         reference_map_id=cfg.sample_map_id, training_step=step, progress=progress,
                         audio_example=cfg.sample_audio_example)
-                progress(f'Lyra {step:,}: példamap elkészült: {output}')
+                progress(f'Lyra {step:,}: sample map generated: {output}')
             except InterruptedError:
                 raise
             except Exception as exc:
@@ -166,7 +166,7 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
                 atomic_json(destination / 'rejected.json', dict(reason=str(exc), error_type=type(exc).__name__,
                             traceback=traceback.format_exc(), step=step, reference_map_id=cfg.sample_map_id,
                             audio_example=cfg.sample_audio_example))
-                progress(f'Lyra {step:,}: a példagenerálás sikertelen: {exc}; a tanítás folytatódik.')
+                progress(f'Lyra {step:,}: sample generation failed: {exc}; training continues.')
             finally:
                 restore_random(random_before); model.train()
 
@@ -207,7 +207,7 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
                             ce, _, beat = losses(model, b)
                             loss = ce / max(1, targets) + .3 * beat / max(1., beat_weight)
                         if not bool(torch.isfinite(loss)):
-                            raise FloatingPointError('Nem véges loss; a korábbi lezárt mentés megmarad.')
+                            raise FloatingPointError('Non-finite loss; the last completed checkpoint is preserved.')
                         scaler.scale(loss).backward()
                         totals += torch.stack((loss.detach(), ce.detach() / max(1, targets), beat.detach() / max(1., beat_weight)))
                     if cancelled():
@@ -220,9 +220,9 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
                         break
                     retries += 1
                     if retries > 8:
-                        raise FloatingPointError('Az FP16 skála nyolc próbából sem stabilizálódott.')
+                        raise FloatingPointError('The FP16 scale did not stabilize after eight retries.')
                     restore_random(rng)
-                    progress('FP16 újrapróba ugyanazzal a batch-csel, csökkentett skálával.')
+                    progress('Retrying the same batch with a reduced FP16 scale.')
                 if outcome == 'cancelled':
                     optimizer.zero_grad(set_to_none=True); break
                 scheduler.step(); step += 1
@@ -259,7 +259,7 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
                 history.write(value)
                 atomic_json(run / 'status.json', value)
                 if step == 1 or step % 10 == 0:
-                    progress(f'Lyra {step:,}/{target:,}: loss {values[0]:.4f}, {seconds:.2f} s/update, {visited / len(dataset):.2f} teljes kör.')
+                    progress(f'Lyra {step:,}/{target:,}: loss {values[0]:.4f}, {seconds:.2f} s/update, {visited / len(dataset):.2f} full cycles.')
                 if step % cfg.validate_every == 0 or time.monotonic() - last_save >= cfg.checkpoint_minutes * 60:
                     save_checkpoint(run / 'last.pt', state()); last_save = time.monotonic()
                 if cfg.sample_every and step % cfg.sample_every == 0:
@@ -283,5 +283,5 @@ def train(dataset_path, run_dir, cfg=None, resume=None, progress=print, cancelle
                         best_validation=best if math.isfinite(best) else None, error=error,
                         checkpoint=str(run / 'last.pt'), visited_windows=step * cfg.effective_batch,
                         completed_cycles=step * cfg.effective_batch // len(dataset), parameters=params))
-            progress(f'Lyra {outcome}: {step:,} lezárt update; mentés: {run / "last.pt"}')
+            progress(f'Lyra {outcome}: {step:,} completed updates; checkpoint: {run / "last.pt"}')
     return str(run / 'last.pt')

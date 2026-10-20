@@ -65,6 +65,6 @@ def test_external_excerpt_is_frozen_and_never_reads_a_reference_map(corpus, tmp_
     np.testing.assert_array_equal(seen[0][0], seen[1][0])
     assert seen[0][1:] == seen[1][1:] == (2026, .6, 6.5)
     Path(spec['audio_path']).write_bytes(b'changed')
-    with pytest.raises(ValueError, match='megváltozott'):
+    with pytest.raises(ValueError, match='has changed'):
         examples.load_example(manifest)
     assert load_json(manifest)['source_path'] == str(source)

@@ -47,20 +47,20 @@ class GenerationConfig:
         presets = {'Auto': {}, 'Aim': dict(aim=2, streams=0), 'Streams': dict(aim=0, streams=2),
                    'Rhythm': dict(rhythm=2), 'Custom': dict(aim=self.aim, streams=self.streams, rhythm=self.rhythm)}
         if self.preset not in presets:
-            raise ValueError('Ismeretlen stílus.')
+            raise ValueError('Unknown style.')
         values = dict(aim=None, streams=None, rhythm=None, **{})
         values.update(presets[self.preset])
         if any(v is not None and v not in (0, 1, 2) for v in values.values()):
-            raise ValueError('A stílusérték 0, 1, 2 vagy Auto lehet.')
+            raise ValueError('Style values must be 0, 1, 2, or Auto.')
         return values
 
     def validate(self):
         if not 0 <= self.stars <= 20 or not 1 <= self.candidates <= 16 or not 0 < self.top_p <= 1 or self.temperature < 0:
-            raise ValueError('Érvénytelen generálási beállítás.')
+            raise ValueError('Invalid generation settings.')
         for key in ('ar', 'od', 'cs', 'hp'):
             v = getattr(self, key)
             if v is not None and not 0 <= v <= 10:
-                raise ValueError('A difficulty beállítás 0–10 között lehet.')
+                raise ValueError('Difficulty settings must be between 0 and 10.')
         self.styles()
 
 
@@ -68,20 +68,20 @@ def difficulty(bm):
     import rosu_pp_py as rosu
     parsed = rosu.Beatmap(content=mapio.dumps(bm))
     if parsed.is_suspicious():
-        raise ValueError('A difficulty-mérő gyanús mapot jelzett.')
+        raise ValueError('The difficulty calculator flagged a suspicious map.')
     attrs = rosu.Difficulty(lazer=False).calculate(parsed)
     return dict(stars=float(attrs.stars), aim=float(attrs.aim), speed=float(attrs.speed))
 
 
 def sample_token(logits, allowed, cfg, generator, bias=None):
     if not allowed:
-        raise ValueError('Nincs érvényes folytatás.')
+        raise ValueError('No valid continuation is available.')
     indices = torch.tensor(allowed, device=logits.device)
     values = logits[indices].float()
     if bias is not None:
         values = values + bias
     if not torch.isfinite(values).all():
-        raise ValueError('Nem véges generálási logit.')
+        raise ValueError('Non-finite generation logit.')
     if cfg.temperature == 0:
         return allowed[int(values.argmax())]
     probabilities, order = (values / cfg.temperature).softmax(0).sort(descending=True)
@@ -112,7 +112,7 @@ def section(model, mel, bm, start, end, duration, cfg, settings, device, generat
     exhausted = False
     while offset < model.config.max_tokens:
         if cancelled():
-            raise InterruptedError('Generálás leállítva.')
+            raise InterruptedError('Generation stopped.')
         remaining = model.config.max_tokens - offset
         exhausted = grammar.state == 'event' and remaining < 32 and grammar.minimum < end
         allowed = grammar.allowed(remaining)
@@ -132,7 +132,7 @@ def section(model, mel, bm, start, end, duration, cfg, settings, device, generat
             except (ValueError, IndexError, OverflowError):
                 retries += 1
                 if retries > 3:
-                    raise ValueError('Három újrapróba után is hibás objektumgeometria.')
+                    raise ValueError('Invalid object geometry after three retries.')
                 grammar, logits, caches, offset = copy.copy(old_grammar), old_logits, old_caches, old_offset
                 event = []
                 continue
@@ -144,11 +144,11 @@ def section(model, mel, bm, start, end, duration, cfg, settings, device, generat
         if token == tok.ids['END']:
             old_grammar, old_logits, old_caches, old_offset = copy.copy(grammar), logits, caches, offset
     if grammar.state not in ('done', 'event'):
-        raise ValueError('A tokenkeret félbevágott egy objektumot.')
+        raise ValueError('The token budget cut an object short.')
     if exhausted or offset >= model.config.max_tokens:
         events = [o.time for o in bm.objects if o.time >= start] + [a for a, _ in bm.breaks if a >= start]
         if not events:
-            raise ValueError('Nem haladt előre a generálás.')
+            raise ValueError('Generation made no progress.')
         return max(events) + 1
     return end
 
@@ -164,17 +164,17 @@ def candidate(model, mel, duration, timing, cfg, settings, device, seed,
     cursor, iterations = start, 0
     while cursor < min(finish, duration):
         if cancelled():
-            raise InterruptedError('Generálás leállítva.')
+            raise InterruptedError('Generation stopped.')
         end = min(math.ceil(duration), finish, cursor + model.config.output_ms)
         next_cursor = section(model, mel, bm, cursor, end, duration, cfg, settings, device, generator, cancelled)
         if next_cursor <= cursor:
-            raise ValueError('A generálás nem halad előre.')
+            raise ValueError('Generation is not advancing.')
         cursor = next_cursor; iterations += 1
-        progress(f'Generálás: {min(cursor, duration) / max(1, duration):.0%} · {len(bm.objects):,} objektum')
+        progress(f'Generation: {min(cursor, duration) / max(1, duration):.0%} · {len(bm.objects):,} objects')
         if iterations > max(100, duration / 20):
-            raise ValueError('Túl sok sikertelen szakaszfolytatás.')
+            raise ValueError('Too many unsuccessful section continuations.')
     if not bm.objects:
-        raise ValueError('A modell még üres mapot generált.')
+        raise ValueError('The model generated an empty map.')
     validate_map(bm, duration)
     return bm
 
@@ -188,7 +188,7 @@ def infer_timing(model, mel, duration, device, cfg, cancelled=lambda: False):
     scores = np.zeros((mel.shape[1], 2), np.float32)
     for start in range(0, math.ceil(duration), model.config.output_ms):
         if cancelled():
-            raise InterruptedError('Timing felismerés leállítva.')
+            raise InterruptedError('Timing estimation stopped.')
         base = max(0, start - model.config.history_ms)
         x = torch.from_numpy(audio.window(mel, base, model.config.audio_ms))[None].to(device)
         with amp(device):
@@ -253,7 +253,7 @@ def generate(checkpoint_path, inputs, output_dir, cfg=None, progress=print, canc
         source = Path(inputs)
         inputs = sorted(p for p in source.rglob('*') if p.suffix.lower() in audio.EXTENSIONS) if source.is_dir() else [source]
     if not inputs:
-        raise ValueError('Nincs kiválasztott zenefájl.')
+        raise ValueError('No audio file selected.')
     outputs, failures = [], []
     with gpu_session(device):
         model = Lyra(len(Tokenizer()), config).to(device)
@@ -262,9 +262,9 @@ def generate(checkpoint_path, inputs, output_dir, cfg=None, progress=print, canc
         del saved
         for audio_path in inputs:
             if cancelled():
-                raise InterruptedError('Generálás leállítva.')
+                raise InterruptedError('Generation stopped.')
             try:
-                progress(f'Zene beolvasása: {Path(audio_path).name}')
+                progress(f'Loading audio: {Path(audio_path).name}')
                 pcm = audio.decode(audio_path)
                 duration = len(pcm) * 1000 / audio.SR
                 mel = audio.spectrogram(pcm).astype(np.float16).astype(np.float32); del pcm
@@ -287,12 +287,12 @@ def generate(checkpoint_path, inputs, output_dir, cfg=None, progress=print, canc
                                 timing=timing_report, repetition=repeat, complete_song=True, settings=asdict(cfg),
                                 difficulty_miss=abs(stats['stars'] - cfg.stars) > .5, candidate_errors=errors)
                 outputs.append(export(bm, audio_path, output_dir, metadata))
-                progress(f'Elkészült: {stats["stars"]:.2f}★, {len(bm.objects):,} objektum.')
+                progress(f'Generated: {stats["stars"]:.2f} stars, {len(bm.objects):,} objects.')
             except ValueError as exc:
                 failures.append(dict(audio=str(audio_path), error=str(exc)))
     atomic_json(Path(output_dir) / 'generation-report.json', dict(outputs=outputs, failures=failures))
     if not outputs:
-        raise ValueError('Nem készült érvényes map: ' + '; '.join(f['error'] for f in failures))
+        raise ValueError('No valid map was generated: ' + '; '.join(f['error'] for f in failures))
     return outputs
 
 

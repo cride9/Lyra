@@ -77,7 +77,7 @@ def source_parts(ref):
         return Path(ref), None
     archive, separator, member = str(ref)[6:].partition('#')
     if not separator:
-        raise ValueError('Hiányos archívumhivatkozás.')
+        raise ValueError('Incomplete archive reference.')
     return Path(unquote(archive)), unquote(member)
 
 
@@ -91,12 +91,12 @@ def read_bytes(ref, maximum=256 * 1024 ** 2):
     path, member = source_parts(ref)
     if member is None:
         if path.stat().st_size > maximum:
-            raise ValueError('Túl nagy forrásfájl.')
+            raise ValueError('Source file is too large.')
         return path.read_bytes()
     with zipfile.ZipFile(path) as z:
         info = z.getinfo(member)
         if not 0 < info.file_size <= maximum or (info.external_attr >> 16) & 0o170000 == 0o120000:
-            raise ValueError('Érvénytelen archívumtag.')
+            raise ValueError('Invalid archive member.')
         return z.read(info)
 
 
