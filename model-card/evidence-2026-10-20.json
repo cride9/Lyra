@@ -1,0 +1,1767 @@
+{
+  "captured_at_utc": "2026-10-20T09:03:45.226336+00:00",
+  "run_config": {
+    "model": {
+      "width": 640,
+      "encoder_layers": 8,
+      "decoder_layers": 12,
+      "heads": 10,
+      "feedforward": 2304,
+      "dropout": 0.1,
+      "audio_ms": 64000,
+      "history_ms": 32000,
+      "output_ms": 24000,
+      "history_tokens": 2048,
+      "max_tokens": 6144,
+      "summary_tokens": 128,
+      "checkpointing": true
+    },
+    "training": {
+      "model": "lyra",
+      "cycles": 3,
+      "effective_batch": 32,
+      "batch_size": 4,
+      "workers": 4,
+      "ram_cache_gib": 8,
+      "disk_cache_gb": 180,
+      "min_free_gib": 8,
+      "lr": 0.0003,
+      "warmup": 1000,
+      "validate_every": 500,
+      "validation_windows": 64,
+      "sample_every": 1000,
+      "sample_map_id": "",
+      "sample_audio_example": "F:\\osu_dataset\\_lyra\\examples\\music-50-90\\example.json",
+      "checkpoint_minutes": 15,
+      "memory_fraction": 0.8,
+      "seed": 42,
+      "device": "auto",
+      "cpu_threads": 2,
+      "steps": 0
+    },
+    "target_steps": 90454,
+    "schedule_total": 100000
+  },
+  "dataset_manifest": {
+    "format": "lyra-dataset-1",
+    "hash": "a6afcf65729b9cb06cf3116c91e50f0b5e2080d35a323a931ceea81270381081",
+    "source_hash": "a71f5bf2471b5fa31dd2338462405e4f2d66da3f107123a1d3511f180d432f79",
+    "root": "F:\\osu_dataset\\_lyra\\dataset",
+    "index": "F:\\osu_dataset\\_lyra\\dataset\\index.sqlite",
+    "model_context": {
+      "audio_ms": 64000,
+      "history_ms": 32000,
+      "output_ms": 24000,
+      "history_tokens": 2048,
+      "max_tokens": 6144
+    },
+    "tokenizer": "lyra-events-v1-64s-ms-xy2",
+    "maps": {
+      "test": 6998,
+      "train": 133440,
+      "validation": 7526
+    },
+    "windows": {
+      "test": 49618,
+      "train": 964841,
+      "validation": 53947
+    },
+    "rejected": 0,
+    "split_policy": "existing song-group 90/5/5; no resplit; all windows indexed",
+    "complete": true,
+    "index_sha256": "e5923fda9245f53da3930c9597ace4b7f05390b8e202b42bc2035ab023263242",
+    "arrays_sha256": {
+      "test": "0209817571877b88d239b1e0c542db48c3e83871530281f241087554001a22a0",
+      "train": "31d9982a59b1fe734cc90c0cf6f6dba910183207f0dfcd8f982f5f89ad2d2688",
+      "validation": "d4d0e9aff2872cd5d37ab0f2783440694ccce59a47fc7696f6295ee9645d1bf8"
+    }
+  },
+  "source_manifest": {
+    "version": "dataset-v2.2-streaming",
+    "cache_layout": "nvme-v1",
+    "audio_version": "mel-v1-22050-220-1024-128-centered",
+    "tokenizer_version": "events-v2-64s-ms-xy2-edge",
+    "source_db": "F:\\osu_dataset\\_training\\audio-input\\source.sqlite",
+    "storage_mode": "rolling",
+    "rolling_cache_gib": 4,
+    "hash": "a71f5bf2471b5fa31dd2338462405e4f2d66da3f107123a1d3511f180d432f79",
+    "index": "F:\\osu_dataset\\_training\\dataset-full\\versions\\a71f5bf2471b5fa31dd2338462405e4f2d66da3f107123a1d3511f180d432f79\\index.sqlite",
+    "index_hash": "8605f4e867a883cd243283373160770704003b25afdd760af434f30ab38194fb",
+    "root": "F:\\osu_dataset\\_training\\dataset-full",
+    "report": {
+      "selected_rows": 151051,
+      "examined_rows": 151051,
+      "unexamined_rows": 0,
+      "metadata_budget_limited": false,
+      "metadata_budget_gib": 4,
+      "indexed_map_cache_gib": 2.4002418518066406,
+      "usable_maps": 147964,
+      "unique_audio": 33994,
+      "song_groups": 29304,
+      "audio_hours": 1791.9397336104812,
+      "splits": {
+        "train": 133440,
+        "test": 6998,
+        "validation": 7526
+      },
+      "star_bands": {
+        "1": 18961,
+        "3": 30495,
+        "4": 28471,
+        "5": 24986,
+        "6": 11207,
+        "8": 735,
+        "10": 58,
+        "0": 91,
+        "2": 29787,
+        "7": 2950,
+        "9": 202,
+        "11": 14,
+        "13": 1,
+        "12": 5,
+        "14": 1
+      },
+      "rejected": 3087,
+      "source_modes": {
+        "extracted": 147964
+      },
+      "mel_cache_persisted": false,
+      "candidate_star_bands": {
+        "0": 102,
+        "1": 17589,
+        "2": 31185,
+        "3": 30808,
+        "4": 27535,
+        "5": 25228,
+        "6": 12914,
+        "7": 4051,
+        "8": 1154,
+        "9": 329,
+        "10": 108,
+        "11": 27,
+        "12": 8,
+        "13": 8,
+        "14": 5
+      },
+      "storage_mode": "rolling",
+      "full_selection_examined": true,
+      "selection_note": "All usable selected rows remain eligible; cache eviction does not exclude maps",
+      "coverage_by_source_star_band": {
+        "0": {
+          "candidates": 102,
+          "usable": 102,
+          "usable_fraction": 1.0
+        },
+        "1": {
+          "candidates": 17589,
+          "usable": 17419,
+          "usable_fraction": 0.9903348683836489
+        },
+        "2": {
+          "candidates": 31185,
+          "usable": 30797,
+          "usable_fraction": 0.9875581208914542
+        },
+        "3": {
+          "candidates": 30808,
+          "usable": 30391,
+          "usable_fraction": 0.986464554661127
+        },
+        "4": {
+          "candidates": 27535,
+          "usable": 27071,
+          "usable_fraction": 0.9831487198111495
+        },
+        "5": {
+          "candidates": 25228,
+          "usable": 24639,
+          "usable_fraction": 0.9766529253210718
+        },
+        "6": {
+          "candidates": 12914,
+          "usable": 12379,
+          "usable_fraction": 0.9585720923029271
+        },
+        "7": {
+          "candidates": 4051,
+          "usable": 3743,
+          "usable_fraction": 0.9239693902740064
+        },
+        "8": {
+          "candidates": 1154,
+          "usable": 1018,
+          "usable_fraction": 0.8821490467937608
+        },
+        "9": {
+          "candidates": 329,
+          "usable": 277,
+          "usable_fraction": 0.8419452887537994
+        },
+        "10": {
+          "candidates": 108,
+          "usable": 96,
+          "usable_fraction": 0.8888888888888888
+        },
+        "11": {
+          "candidates": 27,
+          "usable": 20,
+          "usable_fraction": 0.7407407407407407
+        },
+        "12": {
+          "candidates": 8,
+          "usable": 5,
+          "usable_fraction": 0.625
+        },
+        "13": {
+          "candidates": 8,
+          "usable": 5,
+          "usable_fraction": 0.625
+        },
+        "14": {
+          "candidates": 5,
+          "usable": 2,
+          "usable_fraction": 0.4
+        }
+      },
+      "cache_root": "F:\\osu_cache\\datasets\\d3adff90bc3e8c5e072baf99"
+    }
+  },
+  "metrics": {
+    "count": 6089,
+    "archived_count": 0,
+    "first": {
+      "status": "running",
+      "step": 1,
+      "target_steps": 90454,
+      "loss": 9.531198501586914,
+      "loss_ema": 9.531198501586914,
+      "token_loss": 9.23572826385498,
+      "beat_loss": 0.9849008917808533,
+      "lr": 6e-07,
+      "elapsed_seconds": 25.21799999999348,
+      "seconds_per_update": 17.75,
+      "target_tokens": 26929,
+      "target_tokens_per_second": 1517.1267605633802,
+      "data_seconds": 2.85999999998603,
+      "amp_retries": 0,
+      "gradient_norm": 6.146875858306885,
+      "visited_windows": 32,
+      "completed_cycles": 0,
+      "cycle_fraction": 3.316608643289413e-05,
+      "train_windows": 964841,
+      "parameters": 120612482,
+      "batch_size": 4,
+      "effective_batch": 32,
+      "cache": {
+        "misses": 98,
+        "reused_v2": 77,
+        "writes": 65,
+        "audio_decodes": 13
+      },
+      "peak_vram_gib": 2.398057460784912,
+      "reserved_vram_gib": 3.216796875,
+      "free_vram_gib": 3.7626953125,
+      "validation": {
+        "token_loss": 9.212667136194277,
+        "beat_loss": 0.9975399122826795,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      "validation_token_loss": 9.212667136194277
+    },
+    "latest": {
+      "status": "running",
+      "timestamp_utc": "2026-10-20T09:03:30.026957+00:00",
+      "metrics_schema": 1,
+      "step": 6089,
+      "target_steps": 90454,
+      "loss": 1.8703221082687378,
+      "loss_ema": 1.9146897480221758,
+      "token_loss": 1.7160568237304688,
+      "beat_loss": 0.514217734336853,
+      "lr": 0.0002982434764053712,
+      "elapsed_seconds": 89649.657,
+      "seconds_per_update": 15.515999999945052,
+      "target_tokens": 33481,
+      "target_tokens_per_second": 2157.837071417799,
+      "data_seconds": 0.0,
+      "training_seconds": 15.515999999945052,
+      "data_wait_fraction": 0.0,
+      "examples_per_second": 2.062387213206582,
+      "amp_retries": 0,
+      "gradient_norm": 0.49215126037597656,
+      "grad_scale": 524288.0,
+      "visited_windows": 194848,
+      "completed_cycles": 0,
+      "cycle_fraction": 0.20194830028989233,
+      "train_windows": 964841,
+      "parameters": 120612482,
+      "batch_size": 4,
+      "effective_batch": 32,
+      "cache": {
+        "misses": 138485,
+        "reused_v2": 349111,
+        "audio_decodes": 20209,
+        "writes": 103917,
+        "ram_hits": 16615,
+        "disk_hits": 221162
+      },
+      "peak_vram_gib": 3.889803409576416,
+      "reserved_vram_gib": 5.982421875,
+      "free_vram_gib": 0.7321128845214844
+    },
+    "validations": [
+      {
+        "step": 1,
+        "timestamp_utc": null,
+        "elapsed_seconds": 25.21799999999348,
+        "token_loss": 9.212667136194277,
+        "beat_loss": 0.9975399122826795,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 500,
+        "timestamp_utc": "2026-10-19T09:10:20.821851+00:00",
+        "elapsed_seconds": 7403.0929999999935,
+        "token_loss": 3.2203285931216294,
+        "beat_loss": 0.6511877209445404,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 1000,
+        "timestamp_utc": "2026-10-19T11:12:26.934358+00:00",
+        "elapsed_seconds": 14729.20299999998,
+        "token_loss": 2.8380956020863373,
+        "beat_loss": 0.6044947111322355,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 1500,
+        "timestamp_utc": "2026-10-19T14:17:31.326157+00:00",
+        "elapsed_seconds": 22092.04700000002,
+        "token_loss": 2.3617061716166337,
+        "beat_loss": 0.6655635888757138,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 2000,
+        "timestamp_utc": "2026-10-19T16:22:13.817678+00:00",
+        "elapsed_seconds": 29574.532000000007,
+        "token_loss": 2.1892878679747754,
+        "beat_loss": 0.7052161608661836,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 2500,
+        "timestamp_utc": "2026-10-19T18:23:25.623175+00:00",
+        "elapsed_seconds": 36846.34400000004,
+        "token_loss": 2.0774128978615742,
+        "beat_loss": 0.6009027477738335,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 3000,
+        "timestamp_utc": "2026-10-19T20:25:27.642031+00:00",
+        "elapsed_seconds": 44167.26600000006,
+        "token_loss": 2.0006177648078927,
+        "beat_loss": 0.5897320281453159,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 3500,
+        "timestamp_utc": "2026-10-19T22:29:32.195832+00:00",
+        "elapsed_seconds": 51611.82900000003,
+        "token_loss": 1.9405487691770709,
+        "beat_loss": 0.5762712187598532,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 4000,
+        "timestamp_utc": "2026-10-20T00:31:23.617547+00:00",
+        "elapsed_seconds": 58923.25100000005,
+        "token_loss": 1.8977244660287325,
+        "beat_loss": 0.5776958709673864,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 4500,
+        "timestamp_utc": "2026-10-20T02:33:25.193632+00:00",
+        "elapsed_seconds": 66244.82900000003,
+        "token_loss": 1.8537054243739766,
+        "beat_loss": 0.5641121857750712,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 5000,
+        "timestamp_utc": "2026-10-20T04:35:47.362967+00:00",
+        "elapsed_seconds": 73586.9850000001,
+        "token_loss": 1.820775628902776,
+        "beat_loss": 0.5531711554950643,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 5500,
+        "timestamp_utc": "2026-10-20T06:38:36.642873+00:00",
+        "elapsed_seconds": 80956.26600000006,
+        "token_loss": 1.782212348634725,
+        "beat_loss": 0.5411423513275376,
+        "windows": 64,
+        "target_tokens": 53638
+      },
+      {
+        "step": 6000,
+        "timestamp_utc": "2026-10-20T08:41:16.528253+00:00",
+        "elapsed_seconds": 88316.157,
+        "token_loss": 1.7463274030167322,
+        "beat_loss": 0.5267584106761868,
+        "windows": 64,
+        "target_tokens": 53638
+      }
+    ],
+    "target_tokens_seen": 166408025,
+    "sum_update_seconds": 88977.77899999957,
+    "amp_retry_total": 0,
+    "nonfinite_metric_rows": 0,
+    "peak_vram_gib": 3.8937692642211914,
+    "recent": {
+      "50": {
+        "count": 50,
+        "mean_seconds_per_update": 14.595619999996853,
+        "median_seconds_per_update": 14.5,
+        "mean_target_tokens_per_second": 1855.19378638396,
+        "mean_examples_per_second": 2.199804423304313,
+        "wall_seconds_per_update": 14.749693877550735
+      },
+      "500": {
+        "count": 500,
+        "mean_seconds_per_update": 14.597158000002382,
+        "median_seconds_per_update": 14.577999999979511,
+        "mean_target_tokens_per_second": 1883.0649222798302,
+        "mean_examples_per_second": 2.203212355296489,
+        "wall_seconds_per_update": 14.72041082164326
+      },
+      "1000": {
+        "count": 1000,
+        "mean_seconds_per_update": 14.558349000000977,
+        "median_seconds_per_update": 14.562000000034459,
+        "mean_target_tokens_per_second": 1880.9082112922506,
+        "mean_examples_per_second": 2.2087926894017693,
+        "wall_seconds_per_update": 14.69433533533528
+      }
+    }
+  },
+  "dataset_observed": {
+    "maps": [
+      [
+        "test",
+        6998,
+        1416,
+        1624,
+        309.1829077601411,
+        0.7721805811702508,
+        13.284474354853097,
+        3.9127741301087484
+      ],
+      [
+        "train",
+        133440,
+        26378,
+        30621,
+        6019.880767775258,
+        0.14143808967817237,
+        14.158228185196762,
+        3.9189144636363173
+      ],
+      [
+        "validation",
+        7526,
+        1510,
+        1749,
+        335.8492127739985,
+        0.7371092257730268,
+        11.957876675424458,
+        3.8888163882960702
+      ]
+    ],
+    "unique_audio_hours": [
+      [
+        "test",
+        1624,
+        84.74554953388763
+      ],
+      [
+        "train",
+        30621,
+        1616.5922319853867
+      ],
+      [
+        "validation",
+        1749,
+        90.60195209120685
+      ]
+    ],
+    "window_statistics": [
+      [
+        "test",
+        49618,
+        309.18383805555555,
+        15,
+        24000,
+        22432.621568785522,
+        5523,
+        2918.3267564190414
+      ],
+      [
+        "train",
+        964841,
+        6019.899064722223,
+        1,
+        24000,
+        22461.35542851102,
+        6143,
+        2914.34445260929
+      ],
+      [
+        "validation",
+        53947,
+        335.85027333333335,
+        8,
+        24000,
+        22412.015200103804,
+        6122,
+        2914.1105158766936
+      ]
+    ],
+    "group_overlap_count": 0,
+    "audio_overlap_count": 0,
+    "index_bytes": 474181632,
+    "npy_bytes": 17094880
+  },
+  "source_build": {
+    "at": "2026-10-04T09:40:13Z",
+    "rows": 151051,
+    "arguments": {
+      "statuses": "ranked,approved,loved",
+      "min_stars": 0.0,
+      "max_stars": 15.0,
+      "min_playcount": 50,
+      "min_length": 15,
+      "max_length": 600,
+      "min_tag_votes": 5,
+      "rating_prior_votes": 10.0,
+      "loved_factor": 0.85,
+      "val_frac": 0.05,
+      "test_frac": 0.05,
+      "only_ready": false
+    },
+    "selected_statuses": [
+      [
+        "approved",
+        325
+      ],
+      [
+        "loved",
+        4051
+      ],
+      [
+        "ranked",
+        146675
+      ]
+    ],
+    "selected_ranges": [
+      0.0,
+      14.9755,
+      15,
+      600,
+      300,
+      40370964
+    ]
+  },
+  "source_accepted": {
+    "statuses": [
+      [
+        "approved",
+        318
+      ],
+      [
+        "loved",
+        3714
+      ],
+      [
+        "ranked",
+        143932
+      ]
+    ],
+    "genres": [
+      [
+        "Pop",
+        31422
+      ],
+      [
+        "Anime",
+        30680
+      ],
+      [
+        "Video Game",
+        26581
+      ],
+      [
+        "Electronic",
+        24202
+      ],
+      [
+        "Rock",
+        23308
+      ],
+      [
+        "Metal",
+        3468
+      ],
+      [
+        "Hip Hop",
+        2178
+      ],
+      [
+        "Other",
+        1768
+      ],
+      [
+        "Novelty",
+        1609
+      ],
+      [
+        "Folk",
+        1507
+      ],
+      [
+        "Jazz",
+        812
+      ],
+      [
+        "Classical",
+        429
+      ]
+    ],
+    "languages": [
+      [
+        "Japanese",
+        86450
+      ],
+      [
+        "Instrumental",
+        27919
+      ],
+      [
+        "English",
+        25582
+      ],
+      [
+        "Korean",
+        2243
+      ],
+      [
+        "Other",
+        1729
+      ],
+      [
+        "Russian",
+        1493
+      ],
+      [
+        "Chinese",
+        1099
+      ],
+      [
+        "Spanish",
+        550
+      ],
+      [
+        "German",
+        278
+      ],
+      [
+        "French",
+        236
+      ],
+      [
+        "Italian",
+        189
+      ],
+      [
+        "Polish",
+        116
+      ],
+      [
+        "Swedish",
+        80
+      ]
+    ],
+    "nsfw": [
+      [
+        0,
+        144644
+      ],
+      [
+        1,
+        3320
+      ]
+    ],
+    "object_counts_from_source_metadata": [
+      38407139,
+      28497082,
+      242510
+    ],
+    "styles_provenance": [
+      [
+        null,
+        null,
+        null,
+        2
+      ],
+      [
+        "train-band-statistics",
+        "train-band-statistics",
+        "train-band-statistics",
+        147962
+      ]
+    ]
+  },
+  "source_rejection_reasons": [
+    [
+      "More than 64 native slider anchors",
+      1545
+    ],
+    [
+      "Missing osu under files-root: None",
+      1029
+    ],
+    [
+      "Invalid timing point",
+      281
+    ],
+    [
+      "other_parse_or_validation_error",
+      80
+    ],
+    [
+      "missing_or_changed_source_file",
+      30
+    ],
+    [
+      "Non-finite or zero timing value",
+      14
+    ],
+    [
+      "Invalid spinner duration",
+      10
+    ],
+    [
+      "Invalid slider",
+      9
+    ],
+    [
+      "REP value 94 outside vocabulary",
+      7
+    ],
+    [
+      "Unsorted or negative hit object time",
+      6
+    ],
+    [
+      "REP value 126 outside vocabulary",
+      4
+    ],
+    [
+      "REP value 91 outside vocabulary",
+      4
+    ],
+    [
+      "REP value 95 outside vocabulary",
+      4
+    ],
+    [
+      "REP value 71 outside vocabulary",
+      4
+    ],
+    [
+      "Hit object extends beyond audio",
+      3
+    ],
+    [
+      "REP value 203 outside vocabulary",
+      3
+    ],
+    [
+      "REP value 139 outside vocabulary",
+      3
+    ],
+    [
+      "REP value 119 outside vocabulary",
+      3
+    ],
+    [
+      "REP value 123 outside vocabulary",
+      3
+    ],
+    [
+      "Non-finite hit object",
+      3
+    ],
+    [
+      "REP value 115 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 111 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 235 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 191 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 81 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 70 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 69 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 68 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 83 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 79 outside vocabulary",
+      2
+    ],
+    [
+      "REP value 127 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 75 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 110 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 239 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 65 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 67 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 77 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 92 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 189 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 129 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 93 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 99 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 82 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 207 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 823 outside vocabulary",
+      1
+    ],
+    [
+      "XY value 9037 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 112 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 85 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 113 outside vocabulary",
+      1
+    ],
+    [
+      "XY value -4 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 617 outside vocabulary",
+      1
+    ],
+    [
+      "REP value 117 outside vocabulary",
+      1
+    ]
+  ],
+  "jobs": [
+    {
+      "file": "20261019-085159-837cca.json",
+      "action": "prepare",
+      "status": "running",
+      "started": 1792392719.9515007,
+      "created": 1792392719.9539893,
+      "finished": null,
+      "resume": null
+    },
+    {
+      "file": "20261019-090358-5b8bc1.json",
+      "action": "train",
+      "status": "running",
+      "started": 1792393438.3079631,
+      "created": 1792393438.3099692,
+      "finished": null,
+      "resume": null
+    },
+    {
+      "file": "20261019-091202-7f879b.json",
+      "action": "train",
+      "status": "running",
+      "started": 1792393922.6612248,
+      "created": 1792393922.6635876,
+      "finished": null,
+      "resume": "F:\\osu_dataset\\_lyra\\runs\\main\\last.pt"
+    },
+    {
+      "file": "20261019-101137-c70b9b.json",
+      "action": "train",
+      "status": "running",
+      "started": 1792397497.9589984,
+      "created": 1792397497.9618187,
+      "finished": null,
+      "resume": "F:\\osu_dataset\\_lyra\\runs\\main\\last.pt"
+    },
+    {
+      "file": "20261019-140900-8fc2f1.json",
+      "action": "train",
+      "status": "running",
+      "started": 1792411740.8421881,
+      "created": 1792411740.8441513,
+      "finished": null,
+      "resume": "F:\\osu_dataset\\_lyra\\runs\\main\\last.pt"
+    },
+    {
+      "file": "20261019-144358-1d1d00.json",
+      "action": "train",
+      "status": "running",
+      "started": 1792413838.8175008,
+      "created": 1792413838.820238,
+      "finished": null,
+      "resume": "F:\\osu_dataset\\_lyra\\runs\\main\\last.pt"
+    }
+  ],
+  "samples": [
+    {
+      "directory": "step-1000",
+      "osz_files": [
+        "Hakai - Lyra step 1000 5.90 stars - 86ad68.osz"
+      ],
+      "rejection_reason": null,
+      "metadata": {
+        "measured_stars": 5.896326851770069,
+        "requested_stars": 6.525654784533847,
+        "reference_timing": true,
+        "complete_song": true,
+        "model": "Lyra",
+        "training_step": 1000,
+        "reference_map_id": "d76795b5c1e4e889b242a678467707eeed73389e2a2e468a9ce793ec37b2b3c5",
+        "reference_beatmap_id": "4370690",
+        "reference_map_path": "F:\\osu_dataset\\osu_files\\2086133\\4370690.osu",
+        "reference_split": "train",
+        "reference_title": "Hakai",
+        "reference_artist": "Megurimeguru",
+        "reference_version": "Extra",
+        "duration_ms": 170688.16326530612,
+        "seed": 2026,
+        "settings": {
+          "stars": 6.525654784533847,
+          "preset": "Auto",
+          "aim": null,
+          "streams": null,
+          "rhythm": null,
+          "seed": 2026,
+          "candidates": 1,
+          "temperature": 0.6,
+          "top_p": 0.95,
+          "bpm": null,
+          "offset": null,
+          "timing_map": null,
+          "ar": null,
+          "od": null,
+          "cs": null,
+          "hp": null,
+          "device": "auto"
+        },
+        "difficulty_settings": {
+          "AR": 9.4,
+          "OD": 9.0,
+          "CS": 4.0,
+          "HP": 5.0
+        }
+      },
+      "object_count": 69
+    },
+    {
+      "directory": "step-1115-external",
+      "osz_files": [
+        "music (0m50-1m30) - Lyra step 1115 4.68 stars - fe6a91.osz"
+      ],
+      "rejection_reason": null,
+      "metadata": {
+        "model": "Lyra",
+        "training_step": 1115,
+        "example_source": "external_audio",
+        "title": "music (0m50-1m30)",
+        "source_path": "C:\\Users\\cride\\Desktop\\music.mp3",
+        "source_sha256": "8905ed41a50b7936428e024c73942d22e7bf816b3f1a7fe0295517664e5fc63b",
+        "source_pcm_hash": "0756be76f1d4201af09287f6f4620259734a1f5cb6fc480f4dc432495cbfb5b8",
+        "source_range_ms": [
+          50000,
+          90000
+        ],
+        "audio_sha256": "a2ed954c9af25a2f73655bcc6657b2596e2f5f4e7f41a6edaa9256de745397ee",
+        "duration_ms": 40000.0,
+        "complete_song": false,
+        "complete_excerpt": true,
+        "reference_timing": false,
+        "reference_map_id": null,
+        "timing": {
+          "confidence": 0.7755368805374532,
+          "coverage": 1.0,
+          "segments": [
+            {
+              "time": -459.0515211059537,
+              "period": 1875.2183858618073,
+              "confidence": 0.7615590925764736,
+              "error_ms": 5.942376950777543,
+              "segment_start": 0.0
+            },
+            {
+              "time": 30290.612244897962,
+              "period": 749.5691609977323,
+              "confidence": 0.7895146684984328,
+              "error_ms": 6.893424036280976,
+              "segment_start": 31997.278911564626
+            }
+          ],
+          "uncertain": false
+        },
+        "seed": 2026,
+        "requested_stars": 6.5,
+        "measured_stars": 4.679211777993281,
+        "repetition": {
+          "stack_ms": 0,
+          "bounce_ms": 0,
+          "stack_objects": 0,
+          "bounce_objects": 0,
+          "penalty": 0.0,
+          "degenerate": false
+        },
+        "settings": {
+          "stars": 6.5,
+          "preset": "Auto",
+          "aim": null,
+          "streams": null,
+          "rhythm": null,
+          "seed": 2026,
+          "candidates": 1,
+          "temperature": 0.6,
+          "top_p": 0.95,
+          "bpm": null,
+          "offset": null,
+          "timing_map": null,
+          "ar": null,
+          "od": null,
+          "cs": null,
+          "hp": null,
+          "device": "auto"
+        },
+        "difficulty_settings": {
+          "AR": 9.4,
+          "OD": 9.0,
+          "CS": 4.0,
+          "HP": 5.0
+        }
+      },
+      "object_count": 22
+    },
+    {
+      "directory": "step-2000",
+      "osz_files": [],
+      "rejection_reason": "Három újrapróba után is hibás objektumgeometria.",
+      "metadata": null
+    },
+    {
+      "directory": "step-3000",
+      "osz_files": [
+        "music (0m50-1m30) - Lyra step 3000 3.12 stars - d9bf1c.osz"
+      ],
+      "rejection_reason": null,
+      "metadata": {
+        "model": "Lyra",
+        "training_step": 3000,
+        "example_source": "external_audio",
+        "title": "music (0m50-1m30)",
+        "source_path": "C:\\Users\\cride\\Desktop\\music.mp3",
+        "source_sha256": "8905ed41a50b7936428e024c73942d22e7bf816b3f1a7fe0295517664e5fc63b",
+        "source_pcm_hash": "0756be76f1d4201af09287f6f4620259734a1f5cb6fc480f4dc432495cbfb5b8",
+        "source_range_ms": [
+          50000,
+          90000
+        ],
+        "audio_sha256": "a2ed954c9af25a2f73655bcc6657b2596e2f5f4e7f41a6edaa9256de745397ee",
+        "duration_ms": 40000.0,
+        "complete_song": false,
+        "complete_excerpt": true,
+        "reference_timing": false,
+        "reference_map_id": null,
+        "timing": {
+          "confidence": 0.7857625864521711,
+          "coverage": 1.0,
+          "segments": [
+            {
+              "time": -455.06869414432094,
+              "period": 1874.978880441065,
+              "confidence": 0.7640116412690077,
+              "error_ms": 3.2524120759408106,
+              "segment_start": 0.0
+            },
+            {
+              "time": 30290.612244897962,
+              "period": 749.5691609977323,
+              "confidence": 0.8075135316353346,
+              "error_ms": 6.893424036280976,
+              "segment_start": 31997.278911564626
+            }
+          ],
+          "uncertain": false
+        },
+        "seed": 2026,
+        "requested_stars": 6.5,
+        "measured_stars": 3.1227676431556795,
+        "repetition": {
+          "stack_ms": 0,
+          "bounce_ms": 0,
+          "stack_objects": 0,
+          "bounce_objects": 0,
+          "penalty": 0.0,
+          "degenerate": false
+        },
+        "settings": {
+          "stars": 6.5,
+          "preset": "Auto",
+          "aim": null,
+          "streams": null,
+          "rhythm": null,
+          "seed": 2026,
+          "candidates": 1,
+          "temperature": 0.6,
+          "top_p": 0.95,
+          "bpm": null,
+          "offset": null,
+          "timing_map": null,
+          "ar": null,
+          "od": null,
+          "cs": null,
+          "hp": null,
+          "device": "auto"
+        },
+        "difficulty_settings": {
+          "AR": 9.4,
+          "OD": 9.0,
+          "CS": 4.0,
+          "HP": 5.0
+        }
+      },
+      "object_count": 27
+    },
+    {
+      "directory": "step-4000",
+      "osz_files": [],
+      "rejection_reason": "Három újrapróba után is hibás objektumgeometria.",
+      "metadata": null
+    },
+    {
+      "directory": "step-5000",
+      "osz_files": [
+        "music (0m50-1m30) - Lyra step 5000 7.78 stars - 9d4df5.osz"
+      ],
+      "rejection_reason": null,
+      "metadata": {
+        "model": "Lyra",
+        "training_step": 5000,
+        "example_source": "external_audio",
+        "title": "music (0m50-1m30)",
+        "source_path": "C:\\Users\\cride\\Desktop\\music.mp3",
+        "source_sha256": "8905ed41a50b7936428e024c73942d22e7bf816b3f1a7fe0295517664e5fc63b",
+        "source_pcm_hash": "0756be76f1d4201af09287f6f4620259734a1f5cb6fc480f4dc432495cbfb5b8",
+        "source_range_ms": [
+          50000,
+          90000
+        ],
+        "audio_sha256": "a2ed954c9af25a2f73655bcc6657b2596e2f5f4e7f41a6edaa9256de745397ee",
+        "duration_ms": 40000.0,
+        "complete_song": false,
+        "complete_excerpt": true,
+        "reference_timing": false,
+        "reference_map_id": null,
+        "timing": {
+          "confidence": 0.8425185737752727,
+          "coverage": 1.0,
+          "segments": [
+            {
+              "time": -457.92983860210006,
+              "period": 1874.9055177626606,
+              "confidence": 0.8018247029186815,
+              "error_ms": 3.1301409452607913,
+              "segment_start": 0.0
+            },
+            {
+              "time": 31782.62390670554,
+              "period": 375.1992225461613,
+              "confidence": 0.883212444631864,
+              "error_ms": 4.612892776157423,
+              "segment_start": 31997.278911564626
+            }
+          ],
+          "uncertain": false
+        },
+        "seed": 2026,
+        "requested_stars": 6.5,
+        "measured_stars": 7.782427670233019,
+        "repetition": {
+          "stack_ms": 832,
+          "bounce_ms": 0,
+          "stack_objects": 5,
+          "bounce_objects": 0,
+          "penalty": 0.0,
+          "degenerate": false
+        },
+        "settings": {
+          "stars": 6.5,
+          "preset": "Auto",
+          "aim": null,
+          "streams": null,
+          "rhythm": null,
+          "seed": 2026,
+          "candidates": 1,
+          "temperature": 0.6,
+          "top_p": 0.95,
+          "bpm": null,
+          "offset": null,
+          "timing_map": null,
+          "ar": null,
+          "od": null,
+          "cs": null,
+          "hp": null,
+          "device": "auto"
+        },
+        "difficulty_settings": {
+          "AR": 9.4,
+          "OD": 9.0,
+          "CS": 4.0,
+          "HP": 5.0
+        }
+      },
+      "object_count": 221
+    },
+    {
+      "directory": "step-6000",
+      "osz_files": [],
+      "rejection_reason": "Három újrapróba után is hibás objektumgeometria.",
+      "metadata": null
+    }
+  ],
+  "source_code_sha256": {
+    "lyra/__init__.py": "4c54773cd90fe8bc94e45fdd447c287120366fa7fe4e32b4c3bfca3d64b5220f",
+    "lyra/__main__.py": "663f8c8005dd08617ed5262643fb47615682b66c6c3dbef7b56c754e8fc95d4e",
+    "lyra/audio.py": "be7c1c7cf01068b12b0d915fc3eeefad338c99aac157a7b6656fa6fe81440288",
+    "lyra/benchmark.py": "526691d4d75388d09abf191b1eda97a06d0c7d91820465610b79bb93e0de18f4",
+    "lyra/cache.py": "9ba9fee165742c6dda5387cc60002415645f57d3ffeff01a4bccb44eb6a84b0b",
+    "lyra/config.py": "5c39327f7ca12ed6c6054243796f10e58a0a9a709d16feeb9767b31de9b16618",
+    "lyra/context.py": "c2190ccb836b03de3f4112308ed5f607e7d006ec98e3be8d17e1e62f22210579",
+    "lyra/data.py": "41f65a04e16e9a8e8857b97ac997f7a14508df34e2a6f0043223d95f017e3d0c",
+    "lyra/evaluation.py": "457a7beab3f7f8f9dd6cbc665fc988b00c2b0084a25487399c20c115dc8272a7",
+    "lyra/examples.py": "a272e55752b1387a61c1c8f17eff9d3aa22fd039082f5ee15d9febdf02f057f7",
+    "lyra/generation.py": "5dca39015ee8f4634ea3297755946d227d4e2dd8ac6e168b6ac7daae3c1de6c0",
+    "lyra/geometry.py": "0010730712cc6baff9ff076dc3ca20a0de1cac29fbd783e80b72c0a10ada0c66",
+    "lyra/io.py": "427f2a0176585f6530bd46110ba5f22f229bd427bb227ba4a456a5bea7ac778f",
+    "lyra/jobs.py": "3d57c1dec8b6d1649270d54171286aa62f6bbf03b538d2c85d65488a86938dc1",
+    "lyra/mapio.py": "fa905f67a62653e3c92b66a84eaf005173d702f008244c5a6084a30416e49aa5",
+    "lyra/metrics.py": "9678cf917cf7ae80fe0d812d1b705d547c4fa810a7d87b7c7b3d9a690ca1c1fd",
+    "lyra/model.py": "571524d31fc1730316dfcfb4ee2a6d6b2bdca88c1c6fb80f9ea0c5904e96bf36",
+    "lyra/quality.py": "bdc820ebff764a7e02f99a3cddbc7a547d2802bba02eba9e1f58e179044ea8fa",
+    "lyra/runtime.py": "470131a65fe1b622242fce9c56bd5ae085a4893a9353c6ca95cb21c9043bddd9",
+    "lyra/server.py": "73c9f047b5edab4b15657948f06646f0b92f02ff5c102d76a6b8fc9f96cddd77",
+    "lyra/style.py": "108db66a2cee288a4b18025c75496c8afa76a4eeedf84a4dbe187889422e6897",
+    "lyra/timing.py": "9157cd47715b54a6fcb5e3a3597a675f0652424737fa51eb688bfbaa5eab94f5",
+    "lyra/tokenizer.py": "c16fc159241aa36c6b2d4655c4836686fa58efcd1ca1bc6bf7aa9a4e0dc0030d",
+    "lyra/training.py": "e639b350ad86a570c00732879daed09728899ae59e22d371e3931bf9eb74cba7",
+    "pyproject.toml": "f0b7d4c76e4922038eade7252fa130c3cad05c83f5a890f9ebdce366752d2dad"
+  },
+  "checkpoint_files": [
+    {
+      "name": "best.pt",
+      "bytes": 1447916077,
+      "modified_at_utc": "2026-10-20T08:41:25.484048+00:00"
+    },
+    {
+      "name": "last.pt",
+      "bytes": 1447916077,
+      "modified_at_utc": "2026-10-20T08:56:51.867836+00:00"
+    }
+  ],
+  "saved_checks": {
+    "cache.json": {
+      "cold_seconds": 0.3440000000409782,
+      "warm_seconds": 0.010333333319673935,
+      "speedup": 33.290322628616515,
+      "identical_mel": true,
+      "counters": {
+        "misses": 6,
+        "writes": 4,
+        "audio_decodes": 1,
+        "ram_hits": 12
+      },
+      "scope": "one real held-out window, data loading only"
+    },
+    "external-example.json": {
+      "status": "complete",
+      "step": 1115,
+      "output": "F:\\osu_dataset\\_lyra\\runs\\main\\samples\\step-1115-external\\music (0m50-1m30) - Lyra step 1115 4.68 stars - fe6a91.osz",
+      "manifest": "F:\\osu_dataset\\_lyra\\examples\\music-50-90\\example.json",
+      "source_range_ms": [
+        50000,
+        90000
+      ],
+      "source_exact_pcm_in_dataset": false,
+      "verified": true,
+      "measured_stars": 4.679211777993281,
+      "objects": 22,
+      "object_types": {
+        "slider": 21,
+        "circle": 1
+      },
+      "duration_ms": 40000.0,
+      "first_object_ms": 1058,
+      "last_object_ms": 39999,
+      "verification": "16 targeted tests passed; exact optimizer/RNG resume with external-example config passed; ruff passed",
+      "resumed_job": "F:\\osu_dataset\\_lyra\\jobs\\20261019-144358-1d1d00.json",
+      "verified_running_step": 1116,
+      "training_resumed": true
+    },
+    "gpu-batch4.json": {
+      "model": "Lyra",
+      "config": {
+        "width": 640,
+        "encoder_layers": 8,
+        "decoder_layers": 12,
+        "heads": 10,
+        "feedforward": 2304,
+        "dropout": 0.1,
+        "audio_ms": 64000,
+        "history_ms": 32000,
+        "output_ms": 24000,
+        "history_tokens": 2048,
+        "max_tokens": 6144,
+        "summary_tokens": 128,
+        "checkpointing": true
+      },
+      "device": "cuda",
+      "passed": true,
+      "parameters": 120612482,
+      "measured_updates": 3,
+      "maximum_tokens": 6144,
+      "audio_frames": 6416,
+      "seconds_per_microbatch": 4.901333333342336,
+      "target_tokens_per_second": 3342.7638737697034,
+      "loss": 9.003321647644043,
+      "batch_size": 4,
+      "examples_per_second": 0.8161044613695565,
+      "gpu": "NVIDIA GeForce RTX 3050",
+      "peak_vram_gib": 3.3965630531311035,
+      "reserved_vram_gib": 3.990234375,
+      "free_vram_gib": 3.0009765625
+    },
+    "gpu-batch8.json": {
+      "model": "Lyra",
+      "config": {
+        "width": 640,
+        "encoder_layers": 8,
+        "decoder_layers": 12,
+        "heads": 10,
+        "feedforward": 2304,
+        "dropout": 0.1,
+        "audio_ms": 64000,
+        "history_ms": 32000,
+        "output_ms": 24000,
+        "history_tokens": 2048,
+        "max_tokens": 6144,
+        "summary_tokens": 128,
+        "checkpointing": true
+      },
+      "device": "cuda",
+      "passed": true,
+      "parameters": 120612482,
+      "measured_updates": 3,
+      "maximum_tokens": 6144,
+      "audio_frames": 6416,
+      "seconds_per_microbatch": 9.911333333332246,
+      "target_tokens_per_second": 3306.114212686177,
+      "loss": 9.039996147155762,
+      "batch_size": 8,
+      "examples_per_second": 0.8071567902065861,
+      "gpu": "NVIDIA GeForce RTX 3050",
+      "peak_vram_gib": 5.368125915527344,
+      "reserved_vram_gib": 6.361328125,
+      "free_vram_gib": 0.5465126037597656,
+      "headroom_ok": false,
+      "selected": false,
+      "warning": "Kevesebb mint 0,75 GiB szabad VRAM; a batch 4 profil gyorsabb és több tartalékot hagy."
+    },
+    "gpu.json": {
+      "model": "Lyra",
+      "config": {
+        "width": 640,
+        "encoder_layers": 8,
+        "decoder_layers": 12,
+        "heads": 10,
+        "feedforward": 2304,
+        "dropout": 0.1,
+        "audio_ms": 64000,
+        "history_ms": 32000,
+        "output_ms": 24000,
+        "history_tokens": 2048,
+        "max_tokens": 6144,
+        "summary_tokens": 128,
+        "checkpointing": true
+      },
+      "device": "cuda",
+      "passed": true,
+      "parameters": 120612482,
+      "measured_updates": 3,
+      "maximum_tokens": 6144,
+      "audio_frames": 6416,
+      "seconds_per_microbatch": 4.901333333342336,
+      "target_tokens_per_second": 3342.7638737697034,
+      "loss": 9.003321647644043,
+      "batch_size": 4,
+      "examples_per_second": 0.8161044613695565,
+      "gpu": "NVIDIA GeForce RTX 3050",
+      "peak_vram_gib": 3.3965630531311035,
+      "reserved_vram_gib": 3.990234375,
+      "free_vram_gib": 3.0009765625,
+      "headroom_ok": true,
+      "selected": true
+    },
+    "grammar-recovery.json": {
+      "status": "complete",
+      "step": 1000,
+      "output": "F:\\osu_dataset\\_lyra\\runs\\main\\samples\\step-1000\\Hakai - Lyra step 1000 5.90 stars - 86ad68.osz",
+      "tests": "15 targeted regression tests passed",
+      "verified": true,
+      "measured_stars": 5.896326851770069,
+      "objects": 69,
+      "object_types": {
+        "slider": 54,
+        "circle": 15
+      },
+      "first_object_ms": 2932,
+      "last_object_ms": 170688,
+      "audio_matches_original": true,
+      "resumed_job": "F:\\osu_dataset\\_lyra\\jobs\\20261019-140900-8fc2f1.json",
+      "verified_running_step": 1001,
+      "training_resumed": true
+    },
+    "training-example.json": {
+      "map_id": "d76795b5c1e4e889b242a678467707eeed73389e2a2e468a9ce793ec37b2b3c5",
+      "beatmap_id": "4370690",
+      "set_id": "2086133",
+      "title": "Hakai",
+      "artist": "Megurimeguru",
+      "version": "Extra",
+      "audio": "F:\\osu_dataset\\osu_files\\2086133\\audio.ogg",
+      "map_path": "F:\\osu_dataset\\osu_files\\2086133\\4370690.osu",
+      "duration_ms": 170688.16326530612,
+      "stars": 6.525654784533847,
+      "source_split": "train",
+      "sample_every": 1000,
+      "seed": 2026,
+      "temperature": 0.6,
+      "complete_song": true,
+      "reference_timing": true,
+      "resumed_from_step": 260,
+      "job": "F:\\osu_dataset\\_lyra\\jobs\\20261019-101137-c70b9b.json",
+      "verification": "12 unique targeted tests passed; full-song fixed reference, distinct step exports, deterministic resume, metrics/frontend reconnect; ruff passed",
+      "verified_running_step": 263
+    },
+    "verification.json": {
+      "model": "Lyra",
+      "parameters": 120612482,
+      "dataset": {
+        "test": 6998,
+        "train": 133440,
+        "validation": 7526
+      },
+      "windows": {
+        "test": 49618,
+        "train": 964841,
+        "validation": 53947
+      },
+      "training_status": "running",
+      "step": 35,
+      "worker_status": "running",
+      "last_checkpoint": "F:\\osu_dataset\\_lyra\\runs\\main\\last.pt",
+      "csv_rows": 35,
+      "jsonl_rows": 35,
+      "csv_first_step": "1",
+      "csv_last_step": "35",
+      "timestamps_recorded": true,
+      "tests": {
+        "functional": 21,
+        "logging_and_resume": 6,
+        "unique_tests": 22
+      },
+      "frontend_refresh_verified": true,
+      "frontend_server_restart_verified": true,
+      "gpu_save_resume_verified": true,
+      "screenshot": "F:\\osu_dataset\\_lyra\\checks\\lyra-ui.png"
+    }
+  },
+  "example": {
+    "format": "lyra-audio-example-v1",
+    "source_path": "C:\\Users\\cride\\Desktop\\music.mp3",
+    "source_sha256": "8905ed41a50b7936428e024c73942d22e7bf816b3f1a7fe0295517664e5fc63b",
+    "source_pcm_hash": "0756be76f1d4201af09287f6f4620259734a1f5cb6fc480f4dc432495cbfb5b8",
+    "source_duration_ms": 246061.85941043083,
+    "source_range_ms": [
+      50000,
+      90000
+    ],
+    "audio_path": "F:\\osu_dataset\\_lyra\\examples\\music-50-90\\audio.ogg",
+    "audio_sha256": "a2ed954c9af25a2f73655bcc6657b2596e2f5f4e7f41a6edaa9256de745397ee",
+    "duration_ms": 40000.0,
+    "title": "music (0m50-1m30)",
+    "generation": {
+      "stars": 6.5,
+      "preset": "Auto",
+      "aim": null,
+      "streams": null,
+      "rhythm": null,
+      "seed": 2026,
+      "candidates": 1,
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "bpm": null,
+      "offset": null,
+      "timing_map": null,
+      "ar": null,
+      "od": null,
+      "cs": null,
+      "hp": null,
+      "device": "auto"
+    },
+    "difficulty_settings": {
+      "AR": 9.4,
+      "OD": 9.0,
+      "CS": 4.0,
+      "HP": 5.0
+    }
+  },
+  "source_rejection_categories": {
+    "more_than_64_slider_anchors": 1545,
+    "missing_osu_path": 1029,
+    "invalid_timing_point": 281,
+    "other_source_parse_or_validation_error": 113,
+    "slider_repeats_outside_vocabulary": 75,
+    "nonfinite_or_zero_timing": 14,
+    "invalid_spinner_duration": 10,
+    "invalid_slider": 9,
+    "unsorted_or_negative_object_time": 6,
+    "object_beyond_audio": 3,
+    "coordinates_outside_vocabulary": 2
+  },
+  "derived_token_totals": {
+    "test": 42538839,
+    "train": 823341715,
+    "validation": 46022753
+  },
+  "duration_estimate": {
+    "remaining_updates": 84365,
+    "remaining_seconds": 1239687.6005655609,
+    "total_active_seconds_estimate": 1329337.2575655608,
+    "projected_finish_utc": "2026-11-03T17:24:57.627523+00:00",
+    "basis": "last 1000 logged updates: cumulative elapsed delta / step delta; point estimate, no uncertainty interval"
+  },
+  "runtime": {
+    "inspected_at_utc": "2026-10-20T09:06:42.627675+00:00",
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26100-SP0",
+    "torch": "2.8.0+cu126",
+    "torch_cuda": "12.6",
+    "cudnn": 91002,
+    "vocabulary": 9489,
+    "vocabulary_ranges": {
+      "T": [
+        11,
+        6401
+      ],
+      "F": [
+        6412,
+        10
+      ],
+      "XY": [
+        6422,
+        2049
+      ],
+      "COMBO": [
+        8471,
+        16
+      ],
+      "HS": [
+        8487,
+        16
+      ],
+      "CURVE": [
+        8503,
+        4
+      ],
+      "REP": [
+        8507,
+        64
+      ],
+      "BYTE": [
+        8571,
+        256
+      ],
+      "STAR": [
+        8827,
+        202
+      ],
+      "AIM": [
+        9029,
+        4
+      ],
+      "STREAMS": [
+        9033,
+        4
+      ],
+      "RHYTHM": [
+        9037,
+        4
+      ],
+      "AR": [
+        9041,
+        112
+      ],
+      "OD": [
+        9153,
+        112
+      ],
+      "CS": [
+        9265,
+        112
+      ],
+      "HP": [
+        9377,
+        112
+      ]
+    },
+    "parameters": 120612482,
+    "trainable": 120612482,
+    "components": {
+      "frontend": 2869120,
+      "encoder": 36764672,
+      "decoder": 74853888,
+      "encoder_norm": 1280,
+      "decoder_norm": 1280,
+      "embedding": 6072960,
+      "timing_projection": 2560,
+      "beat_head": 1282,
+      "summary_projection": 44160,
+      "modality": 1280
+    },
+    "gpu": "NVIDIA GeForce RTX 3050",
+    "gpu_vram_mib": 8192,
+    "nvidia_driver": "617.42",
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor",
+    "cpu_cores": 6,
+    "cpu_threads": 12,
+    "host_ram_bytes": 34281668608
+  },
+  "derived": {
+    "total_target_tokens_per_full_dataset_pass": 911903307,
+    "three_train_cycles_target_tokens_excluding_batch_padding": 2470025145,
+    "final_extra_windows": 5,
+    "end_learning_rate_if_goal_unchanged": 3.614684690763444e-05
+  },
+  "source_storage": {
+    "measured_at_utc": "2026-10-20T09:07:51.954760+00:00",
+    "method": "sum logical bytes of unique referenced source file paths; not full download-folder size or deduplicated physical allocation",
+    "audio": {
+      "unique_referenced_paths": 38367,
+      "files_measured": 38367,
+      "unreadable_files": 0,
+      "logical_bytes": 171264910757
+    },
+    "maps": {
+      "unique_referenced_paths": 147964,
+      "files_measured": 147964,
+      "unreadable_files": 0,
+      "logical_bytes": 3932480857
+    }
+  }
+}
