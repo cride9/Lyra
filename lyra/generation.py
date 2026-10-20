@@ -22,6 +22,8 @@ from .runtime import amp, device_for, gpu_session, load_checkpoint
 from .timing import estimate
 from .tokenizer import Tokenizer, Grammar
 
+_MAX_OBJECT_RETRIES = 32
+
 
 @dataclass
 class GenerationConfig:
@@ -98,7 +100,7 @@ def section(model, mel, bm, start, end, duration, cfg, settings, device, generat
     base, prefix = ctx['base'], ctx['prefix']
     busy = max([start, *[o.time + bm.duration(o) for o in bm.objects if o.time < start],
                 *[b for a, b in bm.breaks if a < start]])
-    grammar = Grammar(tok, base, start, end, duration, busy)
+    grammar = Grammar(tok, base, start, end, duration, busy, circle_size=settings['CS'])
     features = audio.window(mel, base, model.config.audio_ms)
     origin = round(base / audio.FRAME_MS) * audio.FRAME_MS
     phase = audio.phase_features(bm, origin, features.shape[1])
@@ -108,6 +110,7 @@ def section(model, mel, bm, start, end, duration, cfg, settings, device, generat
                 torch.from_numpy(ctx['summary_valid'])[None].to(device))
         logits, caches = model.step(torch.tensor([prefix], device=device), memory, valid)
     offset, event, retries = len(prefix), [], 0
+    blocked, decisions = {}, []
     old_grammar, old_logits, old_caches, old_offset = copy.copy(grammar), logits, caches, offset
     exhausted = False
     while offset < model.config.max_tokens:
@@ -115,10 +118,13 @@ def section(model, mel, bm, start, end, duration, cfg, settings, device, generat
             raise InterruptedError('Generation stopped.')
         remaining = model.config.max_tokens - offset
         exhausted = grammar.state == 'event' and remaining < 32 and grammar.minimum < end
-        allowed = grammar.allowed(remaining)
+        denied = blocked.get(tuple(event), ())
+        allowed = [t for t in grammar.allowed(remaining) if t not in denied]
         indices = torch.tensor(allowed, device=device)
         bias = generation_bias(bm.objects, grammar.state, indices, tok) if grammar.kind == 'CIRCLE' else None
         token = sample_token(logits[0, -1], allowed, cfg, generator, bias)
+        if len(allowed) > 1 and token != tok.ids['PATH_END']:
+            decisions.append((len(event), token))
         grammar.consume(token); event.append(token)
         if token == tok.ids['EOS']:
             break
@@ -129,15 +135,22 @@ def section(model, mel, bm, start, end, duration, cfg, settings, device, generat
                 scratch.validate(duration)
                 if scratch.objects:
                     validate_object(scratch.objects[0], settings['CS'])
-            except (ValueError, IndexError, OverflowError):
+            except (ValueError, IndexError, OverflowError) as exc:
                 retries += 1
-                if retries > 3:
-                    raise ValueError('Invalid object geometry after three retries.')
+                if retries > _MAX_OBJECT_RETRIES or not decisions:
+                    raise ValueError(
+                        f'Invalid {grammar.kind.lower()} at {grammar.at:.0f} ms after '
+                        f'{retries - 1} retries: {exc}') from exc
+                # Reject the last non-forced choice at its exact event prefix.
+                # Restoring only the event boundary also bounds KV-cache memory.
+                index, rejected = decisions[-1]
+                blocked.setdefault(tuple(event[:index]), set()).add(rejected)
                 grammar, logits, caches, offset = copy.copy(old_grammar), old_logits, old_caches, old_offset
-                event = []
+                event, decisions = [], []
                 continue
             bm.objects.extend(scratch.objects); bm.breaks.extend(scratch.breaks); bm.timing = scratch.timing
             event, retries = [], 0
+            blocked, decisions = {}, []
         with amp(device):
             logits, caches = model.step(torch.tensor([[token]], device=device), memory, valid, caches, offset)
         offset += 1
@@ -271,6 +284,7 @@ def generate(checkpoint_path, inputs, output_dir, cfg=None, progress=print, canc
                 timing, timing_report = infer_timing(model, mel, duration, device, cfg, cancelled)
                 candidates, errors = [], []
                 for attempt in range(cfg.candidates):
+                    progress(f'Candidate {attempt + 1}/{cfg.candidates} · seed {cfg.seed + attempt}')
                     try:
                         bm = candidate(model, mel, duration, timing, cfg, settings, device, cfg.seed + attempt, progress, cancelled)
                         stats = difficulty(bm)
@@ -279,6 +293,7 @@ def generate(checkpoint_path, inputs, output_dir, cfg=None, progress=print, canc
                                            bm, stats, cfg.seed + attempt, repeat))
                     except ValueError as exc:
                         errors.append(str(exc))
+                        progress(f'Candidate {attempt + 1}/{cfg.candidates} rejected: {exc}')
                 if not candidates:
                     raise ValueError('; '.join(errors))
                 _, bm, stats, seed, repeat = min(candidates, key=lambda v: v[0])

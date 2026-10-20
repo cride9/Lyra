@@ -42,6 +42,8 @@ After an unexpected shutdown, a checkpoint may be older than the last logged upd
 
 Generation retains the previously created map. Recent raw history enters the decoder token stream directly; summaries of older history use only completed past objects. Training and generation share the same context builder. Active sliders crossing section boundaries continue into the next section. Dense sections can be shortened at complete object boundaries, with the remaining interval generated afterward.
 
+During generation, circle and slider-head coordinates account for the circle-size radius. Invalid objects are retried locally, preserving the completed map and excluding previously rejected token choices at the same event prefix. Up to 32 retries are allowed per object. The complete played slider path is still validated; exhausted retries report the object type, time, and underlying validation error. Candidate numbers and rejection reasons appear in the run log.
+
 This provides a longer direct context than the earlier eight-second task. Pattern consistency and playability must still be assessed on the trained model's outputs; architecture and memory measurements alone do not establish either.
 
 ## Full local dataset

@@ -4,7 +4,6 @@ from pathlib import Path
 import subprocess
 import sys
 import time
-import traceback
 import uuid
 import psutil
 from filelock import FileLock
@@ -117,6 +116,5 @@ def worker(path):
     except (InterruptedError, KeyboardInterrupt) as exc:
         atomic_json(path.with_suffix('.status.json'), dict(status='cancelled', message=str(exc), **lease))
     except Exception as exc:
-        traceback.print_exc()
         atomic_json(path.with_suffix('.status.json'), dict(status='failed', error=str(exc), **lease))
         raise

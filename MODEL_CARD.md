@@ -650,7 +650,9 @@ Objects are then generated autoregressively in approximately 24-second sections 
 
 The finite-state grammar constrains event types, times, field order, coordinates, durations, repeat counts, and complete records. Object start times increase, and new generated notes do not begin inside an ongoing slider or spinner according to the generator's busy-state rule.
 
-Each complete object is decoded and validated. Geometric checks include the played slider path and circle-size radius, not only anchor coordinates. Invalid objects can be regenerated up to three times after the initial attempt before the candidate fails.
+Each complete object is decoded and validated. Geometric checks include the played slider path and circle-size radius, not only anchor coordinates. At the recorded training snapshot, invalid objects could be regenerated up to three times after the initial attempt before the candidate failed.
+
+A subsequent decoder fix on 20 October 2026 constrains circle and slider-head coordinates by circle-size radius, excludes rejected field choices at their event prefixes, and allows up to 32 local object retries while preserving earlier valid objects. Exhausted retries report the object type, timestamp, and underlying validation error. This changes inference behavior without changing model weights or vocabulary. The historical preview outcomes in Section 10 predate this fix.
 
 The default general-generation configuration is:
 

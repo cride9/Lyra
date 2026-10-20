@@ -6,6 +6,8 @@ Coordinates are rounded to the nearest 2 osu! pixels; custom samples are omitted
 from __future__ import annotations
 
 from dataclasses import replace
+import math
+from .geometry import radius
 from .mapio import HitObject, TimingPoint
 
 VERSION = "lyra-events-v1-64s-ms-xy2"
@@ -157,9 +159,10 @@ class Tokenizer:
 
 class Grammar:
     """Incremental token mask; no text parsing or silent event repair."""
-    def __init__(self, tok, base, start, end, audio_end, busy_until=0):
+    def __init__(self, tok, base, start, end, audio_end, busy_until=0, *, circle_size=None):
         self.tok, self.base, self.end = tok, base, end
         self.audio_end = audio_end
+        self.circle_size = circle_size
         self.minimum = max(start, busy_until)
         self.state, self.kind = "event", ""
         self.coarse, self.at = 0, start
@@ -184,7 +187,12 @@ class Grammar:
                         return [t.ids["PATH_END"]]
                     allowed += [t.ids["PATH_END"]]
                 return allowed
-            return t.group("XY", 1024, 1024 + (256 if state == "x" else 192))
+            extent = 512 if state == "x" else 384
+            margin = 0
+            if self.circle_size is not None and self.kind in ("CIRCLE", "SLIDER"):
+                margin = radius(self.circle_size) + (0.25 if self.kind == "SLIDER" else 0)
+            return t.group("XY", 1024 + math.ceil(margin / 2),
+                           1024 + math.floor((extent - margin) / 2))
         if state in ("combo", "hs", "curve", "rep"):
             return t.group({"combo": "COMBO", "hs": "HS", "curve": "CURVE", "rep": "REP"}[state])
         if state in ("duration", "sv"):

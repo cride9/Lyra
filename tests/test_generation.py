@@ -8,7 +8,86 @@ from lyra.config import ModelConfig
 from lyra.data import Dataset
 from lyra.generation import GenerationConfig, candidate, export, difficulty
 from lyra.model import Lyra
-from lyra.tokenizer import Tokenizer
+from lyra.tokenizer import Tokenizer, Grammar
+from lyra.geometry import radius, validate_map, validate_object
+
+
+@pytest.mark.parametrize('cs', [0, 4, 7, 10])
+@pytest.mark.parametrize('kind', ['CIRCLE', 'SLIDER'])
+def test_generation_grammar_keeps_complete_hit_radius_in_playfield(cs, kind):
+    tok = Tokenizer()
+    grammar = Grammar(tok, 0, 0, 3000, 3000, circle_size=cs)
+    for token in [tok.ids[kind], *tok.time(500, 0)]:
+        grammar.consume(token)
+    margin = radius(cs) + (0.25 if kind == 'SLIDER' else 0)
+    for extent in (512, 384):
+        coordinates = [(tok.v('XY', t) - 1024) * 2 for t in grammar.allowed()]
+        assert min(coordinates) >= margin
+        assert max(coordinates) <= extent - margin
+        grammar.consume(grammar.allowed()[0])
+
+
+def _geometry_retry_example(monkeypatch, bad_y_values):
+    import lyra.generation as generation
+    tok = Tokenizer()
+    reference = mapio.Beatmap(timing=[mapio.TimingPoint(0, 500)])
+    circle = mapio.HitObject(100, 100, 500)
+    slider = mapio.HitObject(100, 100, 1500, 'slider', curve='L',
+                            points=[(200, bad_y_values[0])], length=280)
+    first = tok.object(reference, circle, 0)
+    record = tok.object(reference, slider, 0)
+    plan = first + record + [tok.ids['EOS']]
+    anchor_y_index = len(plan) - 4
+    position, rejected = 0, []
+
+    def choose(logits, allowed, cfg, generator, bias=None):
+        nonlocal position
+        if position == anchor_y_index:
+            preferred = [tok.xy(0, y)[1] for y in bad_y_values] + [tok.xy(0, 100)[1]]
+            token = next(t for t in preferred if t in allowed)
+        else:
+            token = plan[position]
+        assert token in allowed
+        position += 1
+        return token
+
+    def check(obj, cs):
+        nonlocal position
+        try:
+            validate_object(obj, cs)
+        except ValueError:
+            rejected.append(obj)
+            position = len(first)
+            raise
+
+    monkeypatch.setattr(generation, 'sample_token', choose)
+    monkeypatch.setattr(generation, 'validate_object', check)
+    config = replace(ModelConfig.tiny(), audio_ms=4000, history_ms=1000, output_ms=3000)
+    model = Lyra(len(tok), config).eval()
+    return model, reference, rejected
+
+
+def test_geometry_retry_changes_greedy_choice_and_keeps_completed_objects(monkeypatch):
+    model, reference, rejected = _geometry_retry_example(monkeypatch, [-100])
+    bm = candidate(model, np.zeros((128, 401), np.float32), 3000, reference.timing,
+                   GenerationConfig(temperature=0), dict(AR=8, OD=7, CS=4, HP=5),
+                   torch.device('cpu'), 42, lambda _: None)
+    validate_map(bm, 3000)
+    assert len(rejected) == 1
+    assert [(o.kind, o.time) for o in bm.objects] == [('circle', 500), ('slider', 1500)]
+    assert bm.objects[0].x == bm.objects[0].y == 100
+    assert bm.objects[1].points == [(200, 100)]
+
+
+def test_geometry_retry_limit_reports_actual_object_and_validation_reason(monkeypatch):
+    import lyra.generation as generation
+    monkeypatch.setattr(generation, '_MAX_OBJECT_RETRIES', 2)
+    model, reference, rejected = _geometry_retry_example(monkeypatch, [-100, -98, -96])
+    with pytest.raises(ValueError, match=r'slider at 1500 ms.*2 retries.*Out-of-bounds slider'):
+        candidate(model, np.zeros((128, 401), np.float32), 3000, reference.timing,
+                  GenerationConfig(temperature=0), dict(AR=8, OD=7, CS=4, HP=5),
+                  torch.device('cpu'), 42, lambda _: None)
+    assert len(rejected) == 3
 
 
 def test_real_inference_and_grammar_generate_across_sections(monkeypatch):
