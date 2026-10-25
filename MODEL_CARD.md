@@ -1,7 +1,7 @@
 ---
 model_name: Lyra v2.5
 model_status: training-in-progress
-model_card_date: 2026-10-20
+model_card_date: 2026-10-25
 tags:
   - osu-standard
   - beatmap-generation
@@ -20,11 +20,11 @@ Lyra turns music into structured osu!standard hit objects and timing estimates. 
 
 **Status: training in progress.** This card documents the local `main` run, its actual configuration, the prepared corpus, and observed intermediate results. It does not describe a completed or publicly released checkpoint.
 
-**Training snapshot:** 20 October 2026, **11:03:30 Europe/Budapest** / **09:03:30 UTC**, at optimizer update **6,089**. The read-only metrics snapshot was captured at 09:03:45 UTC. Storage and runtime metadata were inspected separately a few minutes later. All “current” results below refer to this fixed snapshot.
+**Training snapshot:** 25 October 2026, **02:37:35 Europe/Budapest (UTC+02:00)** / **00:37:35 UTC**, at optimizer update **24,253**. The read-only metrics snapshot was captured at 00:37:46 UTC. Training was running at inspection; this card is a fixed snapshot rather than a live status display.
 
-The machine-readable [evidence snapshot](model-card/evidence-2026-10-20.json) records the configurations, dataset statistics, validation history, sample metadata, environment, and source-code SHA-256 hashes used for this card.
+The new [25 October evidence snapshot](model-card/evidence-2026-10-25.json) records the actual configuration, full validation history, preview outcomes, retained generation examples, checkpoint steps and SHA-256 hashes, and current source-code hashes. The [20 October snapshot](model-card/evidence-2026-10-20.json) remains available for comparison.
 
-Historical diagnostic messages in that snapshot are presented in English. Its measurements, identifiers, and source-code hashes still refer to the original audit; the later English-language update does not change the training snapshot.
+The frozen corpus is unchanged. Its index and all three window arrays were SHA-256 verified again, and referenced source-file sizes were measured again on 25 October. Corpus-composition statistics originate from the original audit of this same index. Earlier GPU benchmarks remain historical measurements. Historical non-English worker messages in the new evidence are summarized or translated into English; external runtime logs are unchanged.
 
 ## 1. Model identity and intended use
 
@@ -226,7 +226,7 @@ Source metadata reports **67,146,731 objects**: 38,407,139 circles, 28,497,082 s
 
 ### Referenced file size
 
-The following measures sum the logical file lengths of unique source paths referenced by the accepted corpus. All referenced paths were readable at inspection time.
+The following measures were checked again on **25 October 2026** by summing the logical file lengths of unique source paths referenced by the accepted corpus. All referenced paths were readable, and the sizes match the 20 October audit.
 
 | Assets | Unique file paths | Logical bytes | Decimal GB |
 |---|---:|---:|---:|
@@ -479,50 +479,54 @@ Validation reports token and beat losses separately, weighted by their correspon
 
 ### Observed snapshot
 
-| Metric | Value at update 6,089 |
+| Metric | Value at update 24,253 |
 |---|---:|
-| Training state | Running |
-| Optimizer updates | **6,089 / 90,454** |
-| Progress toward the three-cycle update goal | **6.73%** |
-| Training windows visited | **194,848** |
+| Training state | **Running; resumed from the same main run** |
+| Optimizer updates | **24,253 / 90,454** |
+| Progress toward the three-cycle update goal | **26.81%** |
+| Training windows visited | **776,096** |
 | Complete training cycles | **0** |
-| Progress through the first cycle | **20.19%** |
-| Supervised target tokens processed in the logged trajectory | **166,408,025** |
-| Cumulative active-run elapsed time | **89,649.657 seconds** |
-| Elapsed time in hours | **24 h 54 min 10 s** |
-| Latest joint training loss | **1.870322** |
-| Latest token loss | **1.716057** |
-| Latest beat loss | **0.514218** |
-| Training-loss EMA | **1.914690** |
-| Learning rate | **0.0002982435** |
-| Latest pre-clipping gradient norm | **0.492151** |
-| Latest gradient scale | **524,288** |
-| AMP retries in retained logged updates | **0** |
-| Retained logged updates | **6,089** |
+| Progress through the first cycle | **80.44%** |
+| Supervised target tokens processed in the retained trajectory | **661,967,165** |
+| Cumulative active-run elapsed time | **360,953.642 seconds** |
+| Elapsed time in hours | **100 h 15 min 54 s** |
+| Latest joint training loss | **1.273085** |
+| Latest token loss | **1.200312** |
+| Latest beat loss | **0.242578** |
+| Training-loss EMA | **1.292536** |
+| Learning rate | **0.0002648848** |
+| Latest pre-clipping gradient norm | **0.378555** |
+| Latest gradient scale | **131,072** |
+| AMP retries across retained logged updates | **9** |
+| AMP retries in the latest update | **0** |
+| Retained logged updates | **24,253, contiguous from step 1** |
 | Archived rollback metrics | **0** |
+| Retained rows with non-finite loss components | **0** |
 
-The earliest retained training-job launch was **19 October 2026, 09:03:58 Europe/Budapest**. The wall-clock span from that launch to the metric snapshot is approximately **25 h 59 min 32 s**. The difference from the cumulative active-run timer includes time between resumed processes and other time outside that timer.
+The earliest retained training-job launch was **19 October 2026, 09:03:58 Europe/Budapest**. The wall-clock span to the metric snapshot is **137 h 33 min 37 s**, compared with **100 h 15 min 54 s** on the cumulative active-run timer. Approximately **37 h 17 min 43 s** falls outside that timer, including intervals between resumed processes. Wall-clock span and active-run elapsed time must not be treated as the same measurement.
 
-The latest worker process was launched on **19 October 2026 at 14:43:58 Europe/Budapest**, resuming the same `main/last.pt` trajectory. Previous launches are not separate completed training runs.
+The latest worker launch was **25 October 2026, 02:35:36 Europe/Budapest (UTC+02:00)**, resuming `main/last.pt`. Its durable worker state was running and new optimizer updates had been recorded. An older cancelled status left on disk during startup was not treated as the current worker state. Earlier launches are resumptions of the same trajectory, not independent completed training runs.
 
-The active-run elapsed timer includes loading, training, validation, checkpointing, and sampling while the training process is inside its timed run. It is not a CUDA-kernel-only measurement, and it does not include every paused interval or the initial dataset preparation.
+The active-run timer includes loading, training, validation, checkpointing, and sampling inside each timed training session. It excludes preparation before those sessions and downtime between them. The nine AMP retries replayed their batches with reduced scaling; they are not nine additional completed optimizer updates.
 
 ### Throughput and estimated remaining time
 
 | Measure | Observed value |
 |---|---:|
-| Mean update duration, last 1,000 updates | **14.558 s** |
-| Mean cumulative elapsed-time slope, last 1,000 updates | **14.694 s/update** |
-| Mean per-update target-token throughput, last 1,000 updates | **1,881 tokens/s** |
-| Mean per-update window throughput, last 1,000 updates | **2.21 windows/s** |
-| Remaining updates | **84,365** |
-| Projected remaining active-run time | **Approximately 344.36 hours / 14.35 days** |
-| Projected total active-run time at the current goal | **Approximately 369.26 hours / 15.39 days** |
-| Indicative finish if uninterrupted | **Around 3 November 2026, Europe/Budapest** |
+| Mean update duration, last 1,000 updates | **14.809 s** |
+| Median update duration, last 1,000 updates | **14.796 s** |
+| Mean cumulative active-run elapsed slope, last 1,000 updates | **14.897 s/update** |
+| Mean per-update target-token throughput, last 1,000 updates | **1,847 tokens/s** |
+| Mean per-update window throughput, last 1,000 updates | **2.17 windows/s** |
+| Mean measured data-wait fraction, last 1,000 updates | **0.034%** |
+| Remaining updates | **66,201** |
+| Projected remaining active-run time | **Approximately 273.94 hours / 11.41 days** |
+| Projected total active-run time at the current goal | **Approximately 374.21 hours / 15.59 days** |
+| Indicative finish if uninterrupted from this snapshot | **Around 5 November 2026, Europe/Budapest** |
 
-The estimate is `remaining_updates * recent_elapsed_seconds_per_update`, using the cumulative elapsed delta across the last 1,000 logged updates. That slope captures intervening periodic overhead more closely than the per-update compute timer.
+The estimate is `remaining_updates * recent_active_run_seconds_per_update`, using the cumulative elapsed delta over updates **23,254–24,253**. That slope includes intervening periodic overhead more closely than the per-update compute timer and excludes time outside the cumulative active-run timer.
 
-**This is an extrapolation, not a completed training duration or a guaranteed finish date.** It assumes similar window lengths, hardware availability, validation cost, and generation cost. Successful longer samples, pauses, cache behavior, or configuration changes can change the result.
+**This is an extrapolation, not a completed training duration or a guaranteed finish date.** It assumes similar window lengths, hardware availability, validation cost, and generation cost. Pauses and workload changes can shift the calendar finish date. These estimates replace the older 20 October forecast.
 
 ## 10. Validation and observed generation results
 
@@ -531,6 +535,8 @@ The estimate is `remaining_updates * recent_elapsed_seconds_per_update`, using t
 Validation selects **64 windows without replacement** using a fixed NumPy generator seed of **2026** from the complete validation-window index. The same 64 windows, containing **53,638 target tokens**, are reused at every check. They can come from the middle and end of recordings.
 
 The model is switched to evaluation mode, and RNG state is restored afterward. Validation data does not receive optimizer updates. Repeated use of this fixed subset for checkpoint selection makes it a development-validation sample, not an untouched final test.
+
+The complete retained validation history through the snapshot contains **49 checks**:
 
 | Update | Validation token loss | Validation beat loss |
 |---:|---:|---:|
@@ -546,31 +552,111 @@ The model is switched to evaluation mode, and RNG state is restored afterward. V
 | 4,500 | 1.853705 | 0.564112 |
 | 5,000 | 1.820776 | 0.553171 |
 | 5,500 | 1.782212 | 0.541142 |
-| **6,000** | **1.746327** | **0.526758** |
+| 6,000 | 1.746327 | 0.526758 |
+| 6,500 | 1.710761 | 0.514103 |
+| 7,000 | 1.676612 | 0.502319 |
+| 7,500 | 1.667118 | 0.487327 |
+| 8,000 | 1.630316 | 0.464085 |
+| 8,500 | 1.615635 | 0.451433 |
+| 9,000 | 1.593049 | 0.432332 |
+| 9,500 | 1.574196 | 0.412185 |
+| 10,000 | 1.572231 | 0.383600 |
+| 10,500 | 1.552684 | 0.368549 |
+| 11,000 | 1.526705 | 0.355632 |
+| 11,500 | 1.519050 | 0.351064 |
+| 12,000 | 1.499515 | 0.346223 |
+| 12,500 | 1.498963 | 0.341947 |
+| 13,000 | 1.471357 | 0.329805 |
+| 13,500 | 1.460129 | 0.322561 |
+| 14,000 | 1.445345 | 0.321508 |
+| 14,500 | 1.427261 | 0.313988 |
+| 15,000 | 1.408407 | 0.308579 |
+| 15,500 | 1.364745 | 0.307759 |
+| 16,000 | 1.331106 | 0.295394 |
+| 16,500 | 1.307916 | 0.297540 |
+| 17,000 | 1.286698 | 0.295152 |
+| 17,500 | 1.271943 | 0.303234 |
+| 18,000 | 1.311759 | 0.294807 |
+| 18,500 | 1.248731 | 0.289834 |
+| 19,000 | 1.239516 | 0.287839 |
+| 19,500 | 1.231036 | 0.287654 |
+| 20,000 | 1.228307 | 0.293870 |
+| 20,500 | 1.212446 | 0.284886 |
+| 21,000 | 1.212201 | 0.283522 |
+| 21,500 | 1.202554 | 0.277857 |
+| 22,000 | 1.199256 | 0.280801 |
+| 22,500 | 1.195940 | 0.283646 |
+| 23,000 | 1.189294 | 0.279479 |
+| 23,500 (best) | 1.182261 | 0.281005 |
+| 24,000 (latest) | 1.182860 | 0.282916 |
 
-The lowest logged validation token loss at the snapshot is **1.746327 at update 6,000**. Losses demonstrate learning on this teacher-forced subset; they do not measure free-generation success, timing F1, ranking eligibility, or player satisfaction.
+The best logged validation token loss is **1.182261 at update 23,500**, with beat loss **0.281005**. The latest validation at update **24,000** has token loss **1.182860** and beat loss **0.282916**. The latest validation is therefore slightly worse than the best for token loss; `best.pt` corresponds to **23,500**, not the newest optimizer update.
 
-**No completed final test-set result is established by the inspected run artifacts.** The evaluation utility defaults to 128 sampled test windows and can be given a larger count. A default evaluation call therefore also does not automatically cover every test window.
+Compared with the 20 October snapshot's best token loss of 1.746327, the current best is approximately **32.3% lower on the same fixed validation sample**. This demonstrates development-loss improvement, not a measured improvement in free-generation quality. Checkpoint selection does not score preview object density or playability.
+
+**No held-out test evaluation report was found in the inspected run or runtime-home locations.** The evaluation utility defaults to 128 sampled test windows and can be given a larger count. A default evaluation call therefore does not automatically cover every test window.
 
 ### Fixed external-audio previews
 
-The current periodic preview uses a frozen **40-second excerpt, 00:50–01:30**, from a local music file. The excerpt is stored independently as Ogg audio and never added to the training corpus. A prior check found that the original full recording's exact decoded-PCM hash was absent from the corpus; this is not a guarantee against every alternate edit or recording.
+The periodic preview uses a frozen **40-second excerpt, 00:50–01:30**, from a local music file. The excerpt is stored independently as Ogg audio and is not added to the training corpus. A prior check found that the original full recording's exact decoded-PCM hash was absent from the corpus; this does not rule out every alternate edit or recording.
 
-Preview controls are fixed: **6.5 requested stars**, Auto style, seed **2026**, temperature **0.6**, top-p **0.95**, one candidate, AR **9.4**, OD **9.0**, CS **4.0**, HP **5.0**. Timing is inferred from audio for the external excerpt.
+Preview controls are fixed: **6.5 requested stars**, Auto style, seed **2026**, temperature **0.6**, top-p **0.95**, one candidate, AR **9.4**, OD **9.0**, CS **4.0**, HP **5.0**. The exported external previews' stored controls match this specification. Timing is inferred from audio for the external excerpt.
 
 | Update / preview | Timing source | Outcome | Measured stars | Objects |
 |---|---|---|---:|---:|
-| 1,000, earlier full-song Hakai example | Reference map timing | Exported | 5.90 | 69 |
-| 1,115, external excerpt check | Audio-inferred | Exported | 4.68 | 22 |
-| 2,000, external excerpt | Audio-inferred | Rejected: object geometry after retry limit | — | — |
-| 3,000, external excerpt | Audio-inferred | Exported | 3.12 | 27 |
-| 4,000, external excerpt | Audio-inferred | Rejected: object geometry after retry limit | — | — |
-| 5,000, external excerpt | Audio-inferred | Exported | 7.78 | 221 |
-| 6,000, external excerpt | Audio-inferred | Rejected: object geometry after retry limit | — | — |
+| 1,000, earlier Hakai full-song example | Reference map | Exported | 5.90 | 69 |
+| 1,115, ad hoc external excerpt check | Audio-inferred | Exported | 4.68 | 22 |
+| 2,000, scheduled external excerpt | Audio-inferred | Rejected: invalid geometry after retry limit | — | — |
+| 3,000, scheduled external excerpt | Audio-inferred | Exported | 3.12 | 27 |
+| 4,000, scheduled external excerpt | Audio-inferred | Rejected: invalid geometry after retry limit | — | — |
+| 5,000, scheduled external excerpt | Audio-inferred | Exported | 7.78 | 221 |
+| 6,000, scheduled external excerpt | Audio-inferred | Rejected: invalid geometry after retry limit | — | — |
+| 7,000, scheduled external excerpt | Audio-inferred | Rejected: empty map | — | — |
+| 8,000, scheduled external excerpt | Audio-inferred | Exported | 5.27 | 196 |
+| 9,000, scheduled external excerpt | Audio-inferred | Rejected: invalid geometry after retry limit | — | — |
+| 10,000, scheduled external excerpt | Audio-inferred | Exported | 4.85 | 157 |
+| 11,000, scheduled external excerpt | Audio-inferred | Exported | 8.05 | 304 |
+| 12,000, scheduled external excerpt | Audio-inferred | Exported | 10.24 | 269 |
+| 13,000, scheduled external excerpt | Audio-inferred | Rejected: empty map | — | — |
+| 14,000, scheduled external excerpt | Audio-inferred | Exported | 9.39 | 330 |
+| 15,000, scheduled external excerpt | Audio-inferred | Exported | 5.84 | 187 |
+| 16,000, scheduled external excerpt | Audio-inferred | Rejected: invalid geometry after retry limit | — | — |
+| 17,000, scheduled external excerpt | Audio-inferred | Exported | 9.11 | 323 |
+| 18,000, scheduled external excerpt | Audio-inferred | Rejected: empty map | — | — |
+| 19,000, scheduled external excerpt | Audio-inferred | Exported | 9.46 | 401 |
+| 20,000, scheduled external excerpt | Audio-inferred | Exported | 4.44 | 177 |
+| 21,000, scheduled external excerpt | Audio-inferred | Exported | 5.50 | 275 |
+| 22,000, scheduled external excerpt | Audio-inferred | Exported, sparse | 3.13 | 12 |
+| 23,000, scheduled external excerpt | Audio-inferred | Exported | 4.92 | 226 |
+| 24,000, scheduled external excerpt | Audio-inferred | Exported, severely sparse: one spinner | 0.14 | 1 |
 
-The update-1,000 example requested approximately 6.53 stars and uses a different song and reference timing, so it is not directly comparable with the fixed external excerpt.
+The update-1,000 example requested approximately 6.53 stars and uses a different song and reference timing. The 1,115-step external check was ad hoc. Neither is included in the following scheduled-preview count.
 
-These results expose substantial current variability in geometry, object density, and difficulty control. The successful exports are examples, not a representative benchmark; failed scheduled previews are retained here rather than omitted.
+Across the **23 scheduled external previews from updates 2,000–24,000**, there were **15 exported archives and eight failures**: five invalid-geometry failures and three empty-map failures. This is a small, repeatedly inspected development excerpt, not a general success-rate benchmark. Decoder constraints and retry behavior changed on 20 October, so the complete history also mixes decoder versions.
+
+**A successful export does not establish a useful map.** At update **22,000**, the excerpt contained only **12 objects**. At update **24,000**, it contained **one spinner**, measuring **0.141438 stars** against the **6.5-star** target. The latest timing estimator still reported **0.919 confidence** and **1.0 coverage**. Timing confidence, archive validity, and map-content quality are separate quantities. The sparse output is an observed failure on this fixed excerpt, not proof that every song or the best checkpoint collapses in the same way.
+
+The preview sequence shows continued variability in geometry, density, and difficulty control despite improved teacher-forced losses. These weaknesses remain unresolved in this model card update.
+
+### Retained full-song generation examples
+
+The following independently requested examples are retained under the generated-output directory. Input labels below are local upload names. They are separate from the fixed 40-second development excerpt and use the checkpoint step recorded inside each archive.
+
+| Checkpoint update | Input label | Style | Requested stars | Measured stars | Objects |
+|---:|---|---|---:|---:|---:|
+| 7,500 | music-394224 | Streams | 7.6 | 7.37 | 1,164 |
+| 13,000 | music-d0c3f4 | Streams | 7.6 | 7.17 | 1,070 |
+| 16,500 | music-030214 | Auto | 7.6 | 7.36 | 2,168 |
+| 21,500 | Savages-149bff | Auto | 8.4 | 7.73 | 1,998 |
+| 21,500 | Savages-149bff | Aim | 8.4 | 7.94 | 2,050 |
+| 21,500 | businessman-d57486 | Aim | 4.8 | 4.91 | 637 |
+| 21,500 | businessman-d57486 | Auto | 5.6 | 5.87 | 553 |
+| 23,500 | Savages-aec23e | Aim | 8.4 | 7.27 | 949 |
+| 23,500 | music-48d4c7 | Auto | 8.4 | 6.88 | 1,497 |
+
+All nine retained archives passed ZIP integrity checks and the current map-geometry checks on inspection. Those geometry rechecks did not independently decode each archive's audio to remeasure its duration. These are retained exports rather than a predetermined benchmark including every attempted job, and they do not establish a generation success rate or human-reviewed playability.
+
+At the current best checkpoint, update **23,500**, the two retained 8.4-star-target examples measure **6.88** and **7.27 stars**, respectively. Both exceed the generator's 0.5-star difficulty-miss threshold. Other retained examples are closer to their requested ratings; difficulty control remains approximate and input-dependent.
 
 ## 11. Memory, speed, and implementation optimizations
 
@@ -624,7 +710,7 @@ The PyTorch per-process CUDA allocator fraction is set to **0.8**. This does not
 | Difficulty calculation, project pin | rosu-pp-py 3.1.0 |
 | FFmpeg wrapper, project pin | imageio-ffmpeg 0.6.0 |
 
-The maximum PyTorch allocated-memory peak reported across retained metrics is **3.894 GiB**. The latest record reports **5.982 GiB reserved** by the allocator and **0.732 GiB globally free VRAM**. Allocated, reserved, and globally free memory are different measurements; system/display usage can account for additional VRAM.
+The maximum PyTorch allocated-memory peak across the retained trajectory remains **3.894 GiB**. The latest metric record, after a worker resume, reports **3.318 GiB peak allocated**, **4.123 GiB reserved**, and **2.856 GiB globally free VRAM**. Peak counters reset when a new worker starts, so the latest worker's peak is not the maximum over the whole run. Allocated, reserved, and globally free memory are distinct measurements.
 
 ### Earlier maximum-shape memory benchmark
 
@@ -650,9 +736,9 @@ Objects are then generated autoregressively in approximately 24-second sections 
 
 The finite-state grammar constrains event types, times, field order, coordinates, durations, repeat counts, and complete records. Object start times increase, and new generated notes do not begin inside an ongoing slider or spinner according to the generator's busy-state rule.
 
-Each complete object is decoded and validated. Geometric checks include the played slider path and circle-size radius, not only anchor coordinates. At the recorded training snapshot, invalid objects could be regenerated up to three times after the initial attempt before the candidate failed.
+Each complete object is decoded and validated. Geometric checks include the played slider path and circle-size radius, not only anchor coordinates. In the original 20 October training snapshot, invalid objects could be regenerated up to three times after the initial attempt before the candidate failed.
 
-A subsequent decoder fix on 20 October 2026 constrains circle and slider-head coordinates by circle-size radius, excludes rejected field choices at their event prefixes, and allows up to 32 local object retries while preserving earlier valid objects. Exhausted retries report the object type, timestamp, and underlying validation error. This changes inference behavior without changing model weights or vocabulary. The historical preview outcomes in Section 10 predate this fix.
+The current decoder includes the fix from 20 October 2026, which constrains circle and slider-head coordinates by circle-size radius, excludes rejected field choices at their event prefixes, and allows up to 32 local object retries while preserving earlier valid objects. Exhausted retries report the object type, timestamp, and underlying validation error. This changes inference behavior without changing model weights or vocabulary. Section 10 now contains both the earlier outcomes and later results with this fix; improved error handling has not eliminated all geometry or sparse-output failures.
 
 The default general-generation configuration is:
 
@@ -686,6 +772,18 @@ An exported `.osz` contains the generated map, a usable copy of the provided aud
 | `jobs/*.log` | Background-worker text logs |
 
 At inspection, each `best.pt` and `last.pt` file was **1,447,916,077 bytes**, approximately **1.448 GB / 1.348 GiB**. These are resumable training containers with optimizer state, not minimal weight-only exports.
+
+### Checkpoint identities at this snapshot
+
+| File | Saved update | Best validation token loss in saved state | SHA-256 |
+|---|---:|---:|---|
+| `best.pt` | 23,500 | 1.182261 | `c343f6c311c0d776e30ff6a583300e92e6288ae0d80fa1ef04e460de0e0af742` |
+| `last.pt` | 24,246 | 1.182261 | `90e26bd57085766e48cd020019124cd11f7d33d1bfaa532ccf40b77210af9ad8` |
+
+The latest retained metric is at update **24,253**, while the captured `last.pt` is at **24,246**. Live metrics can be ahead of the latest saved optimizer boundary. Checkpoint paths are updated during training; the hashes above identify the files captured for this card, not every future file at the same path.
+
+The inspected implementation revision is **`4471798`**, `Fix Lyra geometry constraints and object retries`. The evidence includes the full Git revision and current per-source-file hashes. The corpus identities below are unchanged.
+
 
 Checkpoints include model weights, model configuration, training configuration, optimizer state, scheduler state, AMP scaler, Python/NumPy/PyTorch/CUDA RNG states, step count, cumulative elapsed time, best validation loss, dataset hash, coverage counters, and generation defaults.
 
@@ -731,7 +829,7 @@ Checkpoint container:
   lyra-1
 ~~~
 
-The digest values above are those recorded in the frozen manifests. Dataset membership and split counts were independently queried for this card; source-code hashes were recalculated. Large live checkpoint files were not rehashed or loaded into the training GPU for documentation.
+The corpus digest values above are recorded in the frozen manifests. The Lyra SQLite index and all three window arrays were rehashed and match those digests. Corpus statistics remain those of this unchanged index. Both captured checkpoints were SHA-256 hashed with stable file identity, and their metadata was read through CPU memory mapping. No model weights were copied to the training GPU for this update.
 
 ### Local artifact locations
 
@@ -791,9 +889,9 @@ The basic training CLI does not configure the custom external preview excerpt. R
 
 ## 15. Limitations and interpretation
 
-- **Training is incomplete.** The snapshot has not completed even one full training-window cycle.
-- **Free-generation reliability is unresolved.** Three of the five scheduled external previews at updates 2,000–6,000 failed geometric validation. This small, fixed preview sequence is not a general success-rate benchmark.
-- **Difficulty control is approximate.** Successful 6.5-star-target excerpt exports measured 3.12–7.78 stars in the recorded examples.
+- **Training is incomplete.** The snapshot has completed 80.44% of its first training-window cycle and 26.81% of the three-cycle optimizer-update goal.
+- **Free-generation reliability is unresolved.** Eight of 23 scheduled external previews failed. Exported results can also be severely sparse: the update-24,000 excerpt contains one spinner. This fixed development excerpt is not a broad benchmark.
+- **Difficulty control is approximate.** The fixed 6.5-star-target excerpt has exported results ranging from 0.14 to 10.24 stars. The current best checkpoint's retained 8.4-star-target full-song examples measure 6.88 and 7.27 stars.
 - **Teacher-forcing losses are not playability metrics.** They do not establish timing accuracy in milliseconds, beat/downbeat F1, rhythmic emphasis quality, player readability, or enjoyable patterns.
 - **Long-term summaries are lossy.** Whole-song consistency is not guaranteed by the availability of 128 summary positions.
 - **Training/inference history differs.** Training sees reference past events; inference conditions on its own accumulated errors.
@@ -815,7 +913,7 @@ The model card does not grant those rights. Author and artist attribution, permi
 
 Before a completed release can be described, the following evidence remains to be added:
 
-- Final training step, completed cycles, cumulative training duration, and the chosen checkpoint's checksum.
+- Final training step, completed cycles, cumulative training duration, and the final-release checkpoint's checksum; current snapshot checkpoint hashes are provided above.
 - Held-out test results with checkpoint identity, sampling/full-set scope, and count-weighted token/beat losses.
 - Audio-only beat/downbeat timing metrics and timing-estimator failure coverage.
 - A fixed, broader free-generation benchmark reporting failed candidates, geometry rejection rate, measured-star error, density, repetition, and performance by difficulty/style.
@@ -845,8 +943,11 @@ These are outstanding measurements and release details, not claims that the pres
 | Geometric and repetition checks | [lyra/geometry.py](lyra/geometry.py), [lyra/quality.py](lyra/quality.py) |
 | Durable metrics and export | [lyra/metrics.py](lyra/metrics.py) |
 | Runtime pins | [pyproject.toml](pyproject.toml) |
-| Frozen audit supporting this card | [model-card/evidence-2026-10-20.json](model-card/evidence-2026-10-20.json) |
+| Current frozen audit | [model-card/evidence-2026-10-25.json](model-card/evidence-2026-10-25.json) |
+| Previous audit for comparison | [model-card/evidence-2026-10-20.json](model-card/evidence-2026-10-20.json) |
 
 Existing saved verification reports record checks for causal decoding and KV-cache equivalence, mapping gradients reaching the audio encoder, timing-head information separation, shared train/inference context, complete event-window coverage, split separation, cache equivalence, checkpoint resume, background-worker persistence, and self-contained exports.
 
-The earlier base verification report lists 22 unique tests; later targeted reports overlap with that suite and are not added together as a new test count. Those reports are implementation evidence, not quality benchmarks of the unfinished model. This documentation pass used read-only training/index inspection and CPU-only model-shape inspection; it did not rerun GPU training benchmarks or interrupt the active training worker.
+The earlier base report lists 22 unique tests. After the geometry-retry fix, the complete local suite recorded **39 passing tests on 20 October 2026**, including radius-aware coordinate bounds, recovery from repeated greedy geometry failures, and bounded retry diagnostics. These counts describe successive suite versions and are not added together. They are implementation evidence, not a quality benchmark of the unfinished model.
+
+The 25 October update used read-only metrics and job inspection, artifact/ZIP inspection, corpus hash verification, refreshed source-file size measurements, CPU-only model-shape inspection, and CPU memory-mapped checkpoint metadata. It did not start or stop training, generate new benchmark examples, or rerun the earlier GPU benchmarks or test suite.
