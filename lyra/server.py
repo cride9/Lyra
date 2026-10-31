@@ -33,7 +33,7 @@ def create_app(home=HOME):
 
     def settings():
         return {**dict(source=str(SOURCE), run='main', cycles=3, batch_size=4, workers=4,
-                       stars=5, candidates=3, preset='Auto', output=str(home / 'generated')),
+                       stars=5, candidates=3, preset='Auto', mode='single', targets={}, output=str(home / 'generated')),
                 **telemetry(home / 'settings.json', {})}
 
     def run_path(name):
@@ -62,13 +62,16 @@ def create_app(home=HOME):
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         job = jobs.latest(home)
+        job_state = jobs.status(job) if job else None
         train_state = telemetry(path / 'status.json', {})
         graph = Metrics(path).history() if (path / 'metrics.sqlite').exists() else []
         speed = Metrics(path).recent_speed() if (path / 'metrics.sqlite').exists() else None
         runs = sorted(p.name for p in (home / 'runs').glob('*') if p.is_dir())
         return dict(settings=values, home=str(home), run_path=str(path),
                     run=train_state, history=graph, speed_average=speed, config=telemetry(path / 'config.json', {}),
-                    job=jobs.status(job) if job else None, runs=runs,
+                    job=job_state, runs=runs,
+                    mapset_report=(telemetry(Path(job_state['arguments'].get('output_dir', home / 'generated')) / 'mapset-report.json', {})
+                                   if job_state and job_state['action'] == 'generate_mapset' else {}),
                     dataset=telemetry(home / 'dataset' / 'manifest.json', {}),
                     preparation=telemetry(home / 'dataset' / 'progress.json', {}),
                     gpu_check=telemetry(home / 'checks' / 'gpu.json', {}),
@@ -142,13 +145,22 @@ def create_app(home=HOME):
             from .generation import GenerationConfig
             cfg = GenerationConfig(**body.get('config', {}))
             cfg.validate()
+            mode = body.get('mode', 'single')
+            if mode not in ('single', 'mapset'):
+                raise ValueError('Choose single or mapset generation mode.')
+            from .mapset import validate_targets
+            targets = validate_targets(body.get('targets')) if mode == 'mapset' else None
             inputs = body['inputs']
             checkpoint = body['checkpoint']
             output = body.get('output') or settings()['output']
         except (ValueError, TypeError, KeyError) as exc:
             raise HTTPException(400, str(exc)) from exc
-        return launch('generate', dict(checkpoint_path=checkpoint, inputs=inputs, output_dir=output, config=asdict(cfg)),
-                      dict(stars=cfg.stars, preset=cfg.preset, candidates=cfg.candidates, output=output))
+        args = dict(checkpoint_path=checkpoint, inputs=inputs, output_dir=output, config=asdict(cfg))
+        if mode == 'mapset':
+            args['targets'] = targets
+        return launch('generate_mapset' if mode == 'mapset' else 'generate', args,
+                      dict(stars=cfg.stars, preset=cfg.preset, candidates=cfg.candidates, output=output,
+                           mode=mode, targets=targets or {}))
 
     @app.post('/api/upload')
     async def upload(file: UploadFile = File(...)):

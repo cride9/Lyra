@@ -27,6 +27,16 @@ def main():
     generate.add_argument('--output-dir', default=str(HOME / 'generated'))
     generate.add_argument('--stars', type=float, default=5); generate.add_argument('--bpm', type=float)
     generate.add_argument('--offset', type=float); generate.add_argument('--timing-map')
+    generate.add_argument('--mapset', action='store_true')
+    generate.add_argument('--candidates', type=int, default=3)
+    generate.add_argument('--ar', type=float); generate.add_argument('--od', type=float)
+    generate.add_argument('--cs', type=float); generate.add_argument('--hp', type=float)
+    generate.add_argument('--targets', type=json.loads, help='Mapset target stars as a JSON object')
+    verify = commands.add_parser('verify-stitching')
+    verify.add_argument('--dataset-path', default=str(HOME / 'dataset/manifest.json'))
+    verify.add_argument('--output', default=str(HOME / 'checks/stitching'))
+    verify.add_argument('--beatmap-id', type=int, default=4370690)
+    verify.add_argument('--per-band', type=int, default=4)
     evaluate = commands.add_parser('evaluate')
     evaluate.add_argument('checkpoint_path'); evaluate.add_argument('--dataset-path', default=str(HOME / 'dataset' / 'manifest.json'))
     evaluate.add_argument('--output', default=str(HOME / 'evaluation.json')); evaluate.add_argument('--count', type=int, default=128)
@@ -52,9 +62,19 @@ def main():
         from dataclasses import asdict
         args['config'] = asdict(TrainConfig(**{k: args.pop(k) for k in ('cycles', 'batch_size', 'workers', 'effective_batch')}))
     if command == 'generate':
-        args['config'] = {k: args.pop(k) for k in ('stars', 'bpm', 'offset', 'timing_map')}
+        mapset = args.pop('mapset')
+        targets = args.pop('targets')
+        args['config'] = {k: args.pop(k) for k in ('stars', 'bpm', 'offset', 'timing_map', 'candidates', 'ar', 'od', 'cs', 'hp')}
+        if mapset:
+            command = 'generate_mapset'
+            args['targets'] = targets
+        elif targets is not None:
+            parser.error('--targets requires --mapset')
     from .jobs import dispatch
-    print(json.dumps(dispatch(command, args), ensure_ascii=False, indent=2))
+    result = dispatch(command, args)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    if command == 'verify-stitching' and not result['passed']:
+        raise SystemExit(1)
 
 
 if __name__ == '__main__':

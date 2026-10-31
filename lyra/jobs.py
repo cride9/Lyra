@@ -93,6 +93,14 @@ def dispatch(action, args, progress=print, cancelled=lambda: False):
         from .generation import generate, GenerationConfig
         args['cfg'] = GenerationConfig(**args.pop('config', {}))
         return generate(**args, progress=progress, cancelled=cancelled)
+    if action == 'generate_mapset':
+        from .mapset import generate_mapset
+        from .generation import GenerationConfig
+        args['cfg'] = GenerationConfig(**args.pop('config', {}))
+        return generate_mapset(**args, progress=progress, cancelled=cancelled)
+    if action == 'verify-stitching':
+        from .stitching import verify_stitching
+        return verify_stitching(**args, progress=progress, cancelled=cancelled)
     if action == 'benchmark':
         from .benchmark import benchmark
         return benchmark(**args, progress=progress, cancelled=cancelled)

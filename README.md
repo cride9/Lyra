@@ -97,6 +97,55 @@ Automated checks cover causal decoding and KV-cache equivalence, mapping gradien
 
 ## Files and commands
 
+### Section stitching verification
+
+`verify-stitching` replays known dataset tokens through the same section loop, context builder, decoder,
+and transactional event assembly used by free generation. It does not load a neural checkpoint. The
+result must match a section-independent canonical token decode exactly: event order, count, absolute
+start times, breaks and re-tokenized content. Source quantization (2-pixel coordinates, integer slider
+durations and rounded SV) is reported separately. Geometry and generation-mask rejections are recorded
+without dropping or repairing source events. The tokenizer version and existing checkpoints are unchanged.
+
+The default check uses Hakai (beatmap 4370690) plus four deterministic maps from each of the six star bands.
+It writes `report.json` and one `reconstructed.osu` plus detailed report per map. A failure returns a nonzero
+CLI exit code, with the first differing event and its section state. `--per-band 0` checks only Hakai.
+Synthetic tests also check crossing sliders/spinners, BPM/SV changes, simultaneous events, dense token
+budgets, partial final sections and timing-head frame coverage. The final timing-head frame at an exact
+section/frame-aligned song ending is now included. This verifies assembly, not the musical accuracy of
+the model's predicted timing.
+
+### Full mapset generation
+
+Choose **Full mapset** in **Create map**, or pass `--mapset` to the generation command. A song is decoded
+once, its timing is inferred once, and a single model generates all difficulties sequentially. The output
+is one importable `.osz` with six `.osu` files, one shared audio file and `generation.json`.
+
+| Difficulty | Star band | Default target | AR | OD |
+|---|---|---:|---:|---:|
+| Easy | 0 <= stars < 2 | 1.5 | 3 | 3 |
+| Normal | 2 <= stars < 2.7 | 2.3 | 5 | 4 |
+| Hard | 2.7 <= stars < 4 | 3.3 | 7 | 6 |
+| Insane | 4 <= stars < 5.3 | 4.6 | 8.5 | 7.5 |
+| Expert | 5.3 <= stars < 6.5 | 5.9 | 9.2 | 8.5 |
+| Expert+ | stars >= 6.5 | 7.5 | 9.7 | 9 |
+
+Bands use unrounded measured difficulty; displayed stars are rounded. Targets must stay in their band
+and in the existing model's 0–20 conditioning range. CS defaults to 4 and HP to 5. Explicit AR/OD/CS/HP
+values override the profiles, including zero. The selected style is shared across the set.
+
+The candidate count applies to each difficulty (default three, maximum sixteen). In-band candidates
+take priority, then distance from the target, then repetition penalty. If none is in-band, the closest
+valid result is exported with **OUT OF RANGE** in its difficulty name, UI and report. A level with no
+structurally valid candidate prevents a complete archive; successful earlier difficulties and attempt
+reports remain in `mapset-details-*`. Cancellation also preserves these details and never publishes a
+partial archive. `mapset-report.json` records progress, selected difficulties and failures. Seeds, targets,
+actual stars, effective settings and checkpoint identity are retained. No generated notes are manually
+removed or stretched to force a star rating.
+
+`POST /api/generate` accepts optional `mode: "single" | "mapset"` (default `"single"`) and a `targets`
+object keyed by difficulty name. The existing `config` remains a generation configuration. Both job
+types return a list of archive paths and use the same durable workers, cancellation and reconnect flow.
+
 The repository contains source code, the interface, tests, launch/install scripts, documentation, and the model-card evidence snapshot. Runtime data is stored separately:
 
 - `F:/osu_dataset/_lyra/dataset`: persistent Lyra index and dataset manifest.
@@ -114,6 +163,8 @@ python -m lyra benchmark --batch-size 4
 python -m lyra train --cycles 3 --batch-size 4 --workers 4
 python -m lyra train --cycles 3 --batch-size 4 --resume F:/osu_dataset/_lyra/runs/main/last.pt
 python -m lyra generate F:/osu_dataset/_lyra/runs/main/best.pt F:/Music/song.mp3 --stars 5
+python -m lyra generate F:/osu_dataset/_lyra/runs/main/best.pt F:/Music/song.mp3 --mapset --candidates 3
+python -m lyra verify-stitching --dataset-path F:/osu_dataset/_lyra/dataset/manifest.json --output F:/osu_dataset/_lyra/checks/stitching
 python -m lyra evaluate F:/osu_dataset/_lyra/runs/main/best.pt
 python -m pytest -q -p no:cacheprovider
 ~~~

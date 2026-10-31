@@ -25,6 +25,23 @@ from .tokenizer import Tokenizer, Grammar
 _MAX_OBJECT_RETRIES = 32
 
 
+def commit_event(bm, event, tok, base, duration, cs, *, geometry_errors=None):
+    """Decode transactionally; both free generation and token replay commit here."""
+    scratch = mapio.Beatmap(timing=copy.deepcopy(bm.timing), difficulty=dict(bm.difficulty))
+    tok.decode(event, scratch, base)
+    scratch.validate(duration)
+    if scratch.objects:
+        try:
+            validate_object(scratch.objects[0], cs)
+        except ValueError as exc:
+            if geometry_errors is None:
+                raise
+            geometry_errors.append(dict(time=scratch.objects[0].time, reason=str(exc)))
+    bm.objects.extend(scratch.objects)
+    bm.breaks.extend(scratch.breaks)
+    bm.timing = scratch.timing
+
+
 @dataclass
 class GenerationConfig:
     stars: float = 5.
@@ -94,21 +111,25 @@ def sample_token(logits, allowed, cfg, generator, bias=None):
 
 @torch.inference_mode()
 def section(model, mel, bm, start, end, duration, cfg, settings, device, generator,
-            cancelled=lambda: False):
+            cancelled=lambda: False, *, replay=None):
     tok = Tokenizer()
     ctx = conditioning(bm, start, end, duration, cfg.stars, cfg.styles(), settings, model.config)
     base, prefix = ctx['base'], ctx['prefix']
     busy = max([start, *[o.time + bm.duration(o) for o in bm.objects if o.time < start],
                 *[b for a, b in bm.breaks if a < start]])
     grammar = Grammar(tok, base, start, end, duration, busy, circle_size=settings['CS'])
-    features = audio.window(mel, base, model.config.audio_ms)
-    origin = round(base / audio.FRAME_MS) * audio.FRAME_MS
-    phase = audio.phase_features(bm, origin, features.shape[1])
-    with amp(device):
-        memory, valid, _ = model.encode(torch.from_numpy(features)[None].to(device),
-                torch.from_numpy(phase)[None].to(device), torch.from_numpy(ctx['summary'])[None].to(device),
-                torch.from_numpy(ctx['summary_valid'])[None].to(device))
-        logits, caches = model.step(torch.tensor([prefix], device=device), memory, valid)
+    if replay is None:
+        features = audio.window(mel, base, model.config.audio_ms)
+        origin = round(base / audio.FRAME_MS) * audio.FRAME_MS
+        phase = audio.phase_features(bm, origin, features.shape[1])
+        with amp(device):
+            memory, valid, _ = model.encode(torch.from_numpy(features)[None].to(device),
+                    torch.from_numpy(phase)[None].to(device), torch.from_numpy(ctx['summary'])[None].to(device),
+                    torch.from_numpy(ctx['summary_valid'])[None].to(device))
+            logits, caches = model.step(torch.tensor([prefix], device=device), memory, valid)
+    else:
+        replay.prepare(ctx, model.config.max_tokens, bm)
+        logits, caches = None, None
     offset, event, retries = len(prefix), [], 0
     blocked, decisions = {}, []
     old_grammar, old_logits, old_caches, old_offset = copy.copy(grammar), logits, caches, offset
@@ -122,20 +143,20 @@ def section(model, mel, bm, start, end, duration, cfg, settings, device, generat
         allowed = [t for t in grammar.allowed(remaining) if t not in denied]
         indices = torch.tensor(allowed, device=device)
         bias = generation_bias(bm.objects, grammar.state, indices, tok) if grammar.kind == 'CIRCLE' else None
-        token = sample_token(logits[0, -1], allowed, cfg, generator, bias)
+        token = (sample_token(logits[0, -1], allowed, cfg, generator, bias) if replay is None
+                 else replay.next(grammar, allowed))
         if len(allowed) > 1 and token != tok.ids['PATH_END']:
             decisions.append((len(event), token))
         grammar.consume(token); event.append(token)
         if token == tok.ids['EOS']:
             break
         if token == tok.ids['END']:
-            scratch = mapio.Beatmap(timing=copy.deepcopy(bm.timing), difficulty=dict(bm.difficulty))
             try:
-                tok.decode(event, scratch, base)
-                scratch.validate(duration)
-                if scratch.objects:
-                    validate_object(scratch.objects[0], settings['CS'])
+                commit_event(bm, event, tok, base, duration, settings['CS'],
+                             geometry_errors=None if replay is None else replay.geometry_errors)
             except (ValueError, IndexError, OverflowError) as exc:
+                if replay is not None:
+                    raise
                 retries += 1
                 if retries > _MAX_OBJECT_RETRIES or not decisions:
                     raise ValueError(
@@ -148,27 +169,30 @@ def section(model, mel, bm, start, end, duration, cfg, settings, device, generat
                 grammar, logits, caches, offset = copy.copy(old_grammar), old_logits, old_caches, old_offset
                 event, decisions = [], []
                 continue
-            bm.objects.extend(scratch.objects); bm.breaks.extend(scratch.breaks); bm.timing = scratch.timing
             event, retries = [], 0
             blocked, decisions = {}, []
-        with amp(device):
-            logits, caches = model.step(torch.tensor([[token]], device=device), memory, valid, caches, offset)
+        if replay is None:
+            with amp(device):
+                logits, caches = model.step(torch.tensor([[token]], device=device), memory, valid, caches, offset)
         offset += 1
         if token == tok.ids['END']:
             old_grammar, old_logits, old_caches, old_offset = copy.copy(grammar), logits, caches, offset
     if grammar.state not in ('done', 'event'):
         raise ValueError('The token budget cut an object short.')
-    if exhausted or offset >= model.config.max_tokens:
+    if exhausted or offset >= model.config.max_tokens or (replay is not None and replay.exhausted):
         events = [o.time for o in bm.objects if o.time >= start] + [a for a, _ in bm.breaks if a >= start]
         if not events:
             raise ValueError('Generation made no progress.')
-        return max(events) + 1
+        end = max(events) + 1
+    if replay is not None:
+        replay.finish(bm, end)
     return end
 
 
 def candidate(model, mel, duration, timing, cfg, settings, device, seed,
-              progress=print, cancelled=lambda: False, span=None):
-    bm = mapio.Beatmap(timing=copy.deepcopy(timing))
+              progress=print, cancelled=lambda: False, span=None, *, replay=None, template=None):
+    bm = template.copy() if template is not None else mapio.Beatmap()
+    bm.objects, bm.breaks, bm.timing = [], [], copy.deepcopy(timing)
     for key, value in settings.items():
         bm.difficulty[dict(AR='ApproachRate', OD='OverallDifficulty', CS='CircleSize', HP='HPDrainRate')[key]] = str(value)
     bm.metadata.update(Creator='Lyra', Tags='lyra ai-generated')
@@ -179,7 +203,8 @@ def candidate(model, mel, duration, timing, cfg, settings, device, seed,
         if cancelled():
             raise InterruptedError('Generation stopped.')
         end = min(math.ceil(duration), finish, cursor + model.config.output_ms)
-        next_cursor = section(model, mel, bm, cursor, end, duration, cfg, settings, device, generator, cancelled)
+        extra = dict(replay=replay) if replay is not None else {}
+        next_cursor = section(model, mel, bm, cursor, end, duration, cfg, settings, device, generator, cancelled, **extra)
         if next_cursor <= cursor:
             raise ValueError('Generation is not advancing.')
         cursor = next_cursor; iterations += 1
@@ -188,7 +213,10 @@ def candidate(model, mel, duration, timing, cfg, settings, device, seed,
             raise ValueError('Too many unsuccessful section continuations.')
     if not bm.objects:
         raise ValueError('The model generated an empty map.')
-    validate_map(bm, duration)
+    if replay is None:
+        validate_map(bm, duration)
+    else:
+        bm.validate(duration)
     return bm
 
 
@@ -207,10 +235,26 @@ def infer_timing(model, mel, duration, device, cfg, cancelled=lambda: False):
         with amp(device):
             _, _, beats = model.encode(x)
         values = beats[0].float().sigmoid().cpu().numpy()
-        left, right = round(start / audio.FRAME_MS), min(len(scores), round((start + model.config.output_ms) / audio.FRAME_MS))
+        left = round(start / audio.FRAME_MS)
+        right = (len(scores) if start + model.config.output_ms >= duration
+                 else round((start + model.config.output_ms) / audio.FRAME_MS))
         origin = round(base / audio.FRAME_MS)
         scores[left:right] = values[left - origin:right - origin]
     return estimate(scores, offset=cfg.offset)
+
+
+def stage_audio(audio_path, folder):
+    suffix = Path(audio_path).suffix.lower()
+    audio_name = 'audio' + suffix if suffix in ('.mp3', '.ogg') else 'audio.ogg'
+    if suffix in ('.mp3', '.ogg'):
+        shutil.copyfile(audio_path, Path(folder) / audio_name)
+    else:
+        proc = subprocess.run([audio.ffmpeg(), '-nostdin', '-v', 'error', '-threads', '1', '-i', str(audio_path),
+                '-map', '0:a:0', '-c:a', 'libvorbis', '-q:a', '6', str(Path(folder) / audio_name)], capture_output=True,
+                timeout=600, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        if proc.returncode:
+            raise ValueError(proc.stderr.decode(errors='replace'))
+    return audio_name
 
 
 def export(bm, audio_path, destination, metadata):
@@ -227,17 +271,7 @@ def export(bm, audio_path, destination, metadata):
     try:
         with tempfile.TemporaryDirectory(prefix='export-', dir=CACHE) as folder:
             folder = Path(folder)
-            suffix = Path(audio_path).suffix.lower()
-            audio_name = 'audio' + suffix if suffix in ('.mp3', '.ogg') else 'audio.ogg'
-            if suffix in ('.mp3', '.ogg'):
-                shutil.copyfile(audio_path, folder / audio_name)
-            else:
-                proc = subprocess.run([audio.ffmpeg(), '-nostdin', '-v', 'error', '-threads', '1', '-i', str(audio_path),
-                        '-map', '0:a:0', '-c:a', 'libvorbis', '-q:a', '6', str(folder / audio_name)], capture_output=True,
-                        timeout=600, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-                if proc.returncode:
-                    raise ValueError(proc.stderr.decode(errors='replace'))
-            bm.general['AudioFilename'] = audio_name
+            bm.general['AudioFilename'] = stage_audio(audio_path, folder)
             bm.metadata.update(Title=song_title, Creator='Lyra', Version=version,
                                Tags='lyra ai-generated', BeatmapID='0', BeatmapSetID='-1')
             mapio.write(bm, folder / 'Lyra.osu')
